@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的相册</title>
+    <style>
+        /* === 基础风格 (和你主页一致) === */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e8eef5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            margin-top: 20px;
+        }
+
+        h1 { margin-bottom: 10px; }
+
+        /* === 返回按钮 === */
+        .back-btn {
+            display: inline-block;
+            text-decoration: none;
+            color: #666;
+            border: 1px solid #ccc;
+            padding: 8px 20px;
+            border-radius: 20px;
+            background: white;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover {
+            background: #333;
+            color: white;
+            border-color: #333;
+        }
+
+        /* === 相册网格布局 (核心代码) === */
+        .gallery {
+            display: grid;
+            /* 自动适应屏幕：每列最小 250px，剩下的空间平分 */
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px; /* 图片之间的间距 */
+            max-width: 1000px;
+            margin: 0 auto; /* 居中 */
+        }
+
+        /* 图片容器 */
+        .photo-card {
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        /* 鼠标悬停特效 */
+        .photo-card:hover {
+            transform: translateY(-5px); /* 稍微上浮 */
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        /* 图片本体 */
+        .photo-card img {
+            width: 100%;       /* 撑满卡片 */
+            height: 200px;     /* 固定高度 */
+            object-fit: cover; /* 裁剪图片保证不变形 */
+            border-radius: 5px;
+            display: block;
+        }
+        
+        /* 图片下方的说明文字 */
+        .caption {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="back-btn">← 返回主页</a>
+        <h1>📸 我的生活瞬间</h1>
+        <p>这里记录了一些美好的时刻</p>
+    </header>
+
+    <div class="gallery">
+        
+        <div class="photo-card">
+            <img src="photos/1.jpg" alt="照片1">
+            <div class="caption">风景</div>
+        </div>
+
+        <div class="photo-card">
+            <img src="photos/2.jpg" alt="照片2">
+            <div class="caption">美食</div>
+        </div>
+
+        <div class="photo-card">
+            <img src="photos/3.jpg" alt="照片3">
+            <div class="caption">猫咪</div>
+        </div>
+
+        </div>
+
+</body>
+</html>
