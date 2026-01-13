@@ -159,6 +159,35 @@
             transition: 0.5s;
         }
 
+        /* === 黑夜模式专用样式 === */
+        /* 当 body 带有 dark-mode 类名时，下面的样式生效 */
+
+        body.dark-mode {
+            background-color: #1a2340 !important;
+        }
+
+        /* 让卡片变黑 */
+        body.dark-mode .card {
+            background-color: #2b324d !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        /* 让标题变白 */
+        body.dark-mode h1,
+        body.dark-mode #my-title {
+            color: #fff !important;
+        }
+
+        /* 让段落文字变灰白 */
+        body.dark-mode p {
+            color: #ccc !important;
+        }
+
+        /* 适配你的 3D 和相册按钮，让它们在黑夜里更显眼一点（可选） */
+        body.dark-mode .btn {
+            box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1);
+        }
+
         .star {
             position: absolute;
             background-color: #fff;
@@ -323,7 +352,7 @@
     </div>
 
     <div class="card" id="my-card">
-        <img src="avatar.jpg" alt="我的头像" class="avatar">
+        <img src="assets/images/avatar.jpg" alt="我的头像" class="avatar">
 
 
         <h1 id="my-title">👋 你好，世界！</h1>
@@ -333,29 +362,7 @@
         <a href="model.html" class="btn" style="background-color: #9370DB; margin-left: 10px;">看个 3D 🧊</a>
     </div>
 
-    <script>
-        const checkbox = document.getElementById('day-night-switch');
-        const card = document.getElementById('my-card');
-        const title = document.getElementById('my-title');
-
-        checkbox.addEventListener('change', function () {
-            if (this.checked) {
-                // 黑夜模式
-                document.body.style.backgroundColor = '#1a2340';
-                card.style.backgroundColor = '#2b324d';
-                card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
-                title.style.color = '#fff';
-                card.querySelectorAll('p').forEach(p => p.style.color = '#ccc');
-            } else {
-                // 白天模式
-                document.body.style.backgroundColor = '#e8eef5';
-                card.style.backgroundColor = 'white';
-                card.style.boxShadow = '0 10px 25px rgba(0,0,0,0.1)';
-                title.style.color = '#333';
-                card.querySelectorAll('p').forEach(p => p.style.color = '#666');
-            }
-        });
-    </script>
+    <script src="assets/js/theme.js"></script>
 
 </body>
 

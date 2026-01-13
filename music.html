@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的随身听</title>
+    <style>
+        /* === 黑夜模式通用样式 (复制到所有页面) === */
+        body.dark-mode {
+            background-color: #1a2340 !important;
+            /* 背景变深蓝黑 */
+            color: #e0e0e0 !important;
+            /* 文字变灰白 */
+        }
+
+        /* 让所有类型的卡片变黑 (相册卡片、3D卡片、普通卡片) */
+        body.dark-mode .card,
+        body.dark-mode .photo-card,
+        body.dark-mode .model-card,
+        body.dark-mode .modal-content {
+            background-color: #2b324d !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+            color: #fff !important;
+        }
+
+        /* 让标题和文字变白 */
+        body.dark-mode h1,
+        body.dark-mode h2,
+        body.dark-mode h3,
+        body.dark-mode p {
+            color: #fff !important;
+        }
+
+        /* 让顶部返回按钮适配 */
+        body.dark-mode .back-btn {
+            background-color: #384260 !important;
+            color: #fff !important;
+            border-color: #555 !important;
+        }
+
+        /* 3D 模型的背景色特殊处理 */
+        body.dark-mode model-viewer {
+            background-color: #2b324d !important;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            overflow: hidden;
+            /* 禁止整个页面滚动 */
+        }
+
+        header {
+            padding: 20px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 8px 20px;
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+            transition: 0.3s;
+        }
+
+        .back-btn:hover {
+            background: white;
+            color: #333;
+        }
+
+        /* === 主播放器容器 === */
+        .player-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 50px;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* === 左侧：唱片封面 === */
+        .disk-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 350px;
+        }
+
+        .disk {
+            width: 300px;
+            height: 300px;
+            background: black;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            animation: rotate 20s linear infinite;
+            animation-play-state: paused;
+            /* 默认暂停 */
+            border: 5px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 唱片转动动画 */
+        .disk.playing {
+            animation-play-state: running;
+        }
+
+        .disk img {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #333;
+        }
+
+        .song-info {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .song-info h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .song-info p {
+            margin: 5px 0;
+            opacity: 0.8;
+        }
+
+        /* === 右侧：歌词区域 === */
+        .lyrics-area {
+            width: 400px;
+            height: 400px;
+            /* 蒙版效果：上下淡出 */
+            mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .lyrics-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: center;
+            transition: transform 0.3s ease-out;
+            /* 滚动动画 */
+        }
+
+        .lyrics-list li {
+            height: 40px;
+            /* 每一行的高度 */
+            line-height: 40px;
+            font-size: 16px;
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+
+        /* 当前高亮的歌词 */
+        .lyrics-list li.active {
+            color: #fff;
+            font-size: 22px;
+            font-weight: bold;
+            opacity: 1;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        /* === 底部控制条 === */
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-play {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: white;
+            color: #764ba2;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 进度条样式 */
+        input[type=range] {
+            width: 200px;
+            accent-color: white;
+        }
+
+        /* === 手机适配 === */
+        @media (max-width: 768px) {
+            .player-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .disk {
+                width: 200px;
+                height: 200px;
+            }
+
+            .disk img {
+                width: 140px;
+                height: 140px;
+            }
+
+            .lyrics-area {
+                height: 200px;
+                width: 100%;
+            }
+
+            .song-info h2 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="index.html" class="back-btn">← 退出播放</a>
+    </header>
+
+    <div class="player-container">
+
+        <div class="disk-area">
+            <div class="disk" id="disk">
+                <img src="" id="cover-img" alt="封面">
+            </div>
+            <div class="song-info">
+                <h2 id="song-title">加载中...</h2>
+                <p id="song-artist">...</p>
+
+                <div class="controls">
+                    <button class="btn-play" id="play-btn">▶</button>
+                    <input type="range" id="progress-bar" value="0" step="0.1">
+                </div>
+            </div>
+        </div>
+
+        <div class="lyrics-area">
+            <ul class="lyrics-list" id="lyrics-box">
+            </ul>
+        </div>
+
+    </div>
+
+    <audio id="audio-player"></audio>
+
+    <script>
+        const audio = document.getElementById('audio-player');
+        const playBtn = document.getElementById('play-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const lyricsBox = document.getElementById('lyrics-box');
+        const disk = document.getElementById('disk');
+
+        let lyricsData = []; // 存解析后的歌词 [{time: 12.3, text: "歌词"}]
+        let isPlaying = false;
+
+        // 1. 获取数据
+        fetch('data/music.json')
+            .then(res => res.json())
+            .then(data => {
+                const song = data[0]; // 这里默认取第一首歌
+
+                // 加载界面信息
+                document.getElementById('song-title').innerText = song.title;
+                document.getElementById('song-artist').innerText = song.artist;
+                document.getElementById('cover-img').src = song.cover;
+                audio.src = song.src;
+
+                // 解析歌词
+                parseLyrics(song.lrc);
+            });
+
+        // 2. 解析 LRC 格式的函数
+        function parseLyrics(lrcString) {
+            const lines = lrcString.split('\n');
+            lyricsData = [];
+
+            lines.forEach(line => {
+                // 正则表达式匹配 [00:12.34]
+                const match = line.match(/\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/);
+                if (match) {
+                    const minutes = parseInt(match[1]);
+                    const seconds = parseInt(match[2]);
+                    const milliseconds = parseInt(match[3]);
+                    const text = match[4].trim();
+
+                    // 把时间全部转换成“秒”
+                    const time = minutes * 60 + seconds + milliseconds / 100;
+
+                    if (text) { // 只要有内容的行
+                        lyricsData.push({ time, text });
+                    }
+                }
+            });
+
+            renderLyrics();
+        }
+
+        // 3. 渲染歌词到页面
+        function renderLyrics() {
+            lyricsBox.innerHTML = '';
+            lyricsData.forEach((line, index) => {
+                const li = document.createElement('li');
+                li.innerText = line.text;
+                li.dataset.index = index; // 记下索引
+                lyricsBox.appendChild(li);
+            });
+        }
+
+        // 4. 监听音乐播放进度 (最核心的同步逻辑)
+        audio.addEventListener('timeupdate', () => {
+            // 更新进度条
+            progressBar.value = (audio.currentTime / audio.duration) * 100 || 0;
+
+            // 寻找当前应该高亮的那一行
+            // 算法：找最后一个“时间小于当前时间”的行
+            let activeIndex = -1;
+            for (let i = 0; i < lyricsData.length; i++) {
+                if (audio.currentTime >= lyricsData[i].time) {
+                    activeIndex = i;
+                } else {
+                    break; // 只要找到一个比当前时间大的，后面的肯定更大了，直接停
+                }
+            }
+
+            // 更新界面
+            if (activeIndex !== -1) {
+                updateActiveLyric(activeIndex);
+            }
+        });
+
+        // 5. 歌词滚动逻辑
+        function updateActiveLyric(index) {
+            // 先移除所有的高亮
+            const activeLi = lyricsBox.querySelector('.active');
+            if (activeLi) activeLi.classList.remove('active');
+
+            // 给当前的加高亮
+            const lis = lyricsBox.querySelectorAll('li');
+            if (lis[index]) {
+                lis[index].classList.add('active');
+
+                // === 计算滚动位置 ===
+                // 每一行高 40px。如果你想让第 index 行居中：
+                // 偏移量 = (index * 40) - (容器高度的一半) + (一行高度的一半)
+                // 容器高度 400，一半是 200。
+                const offset = (index * 40) - 200 + 20;
+                lyricsBox.style.transform = `translateY(-${offset}px)`;
+            }
+        }
+
+        // 6. 播放/暂停控制
+        playBtn.addEventListener('click', () => {
+            if (isPlaying) {
+                audio.pause();
+                disk.classList.remove('playing');
+                playBtn.innerText = "▶";
+            } else {
+                audio.play();
+                disk.classList.add('playing');
+                playBtn.innerText = "⏸";
+            }
+            isPlaying = !isPlaying;
+        });
+
+        // 7. 进度条拖拽
+        progressBar.addEventListener('input', (e) => {
+            const seekTime = (e.target.value / 100) * audio.duration;
+            audio.currentTime = seekTime;
+        });
+
+    </script>
+    <script src="assets/js/theme.js"></script>
+</body>
+
+</html>

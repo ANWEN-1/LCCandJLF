@@ -8,6 +8,44 @@
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
 
     <style>
+        /* === 黑夜模式通用样式 (复制到所有页面) === */
+        body.dark-mode {
+            background-color: #1a2340 !important;
+            /* 背景变深蓝黑 */
+            color: #e0e0e0 !important;
+            /* 文字变灰白 */
+        }
+
+        /* 让所有类型的卡片变黑 (相册卡片、3D卡片、普通卡片) */
+        body.dark-mode .card,
+        body.dark-mode .photo-card,
+        body.dark-mode .model-card,
+        body.dark-mode .modal-content {
+            background-color: #2b324d !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+            color: #fff !important;
+        }
+
+        /* 让标题和文字变白
+        body.dark-mode h1,
+        body.dark-mode h2,
+        body.dark-mode h3,
+        body.dark-mode p {
+            color: #fff !important;
+        } */
+
+        /* 让顶部返回按钮适配 */
+        body.dark-mode .back-btn {
+            background-color: #384260 !important;
+            color: #fff !important;
+            border-color: #555 !important;
+        }
+
+        /* 3D 模型的背景色特殊处理 */
+        body.dark-mode model-viewer {
+            background-color: #2b324d !important;
+        }
+
         /* === 基础设置 === */
         body {
             font-family: 'Segoe UI', sans-serif;
@@ -227,7 +265,7 @@
         const bigModel = document.getElementById('big-model');
 
         // 读取数据
-        fetch('models.json')
+        fetch('data/models.json')
             .then(response => response.json())
             .then(data => {
                 data.forEach(item => {
@@ -285,7 +323,7 @@
             }
         });
     </script>
-
+    <script src="assets/js/theme.js"></script>
 </body>
 
 </html>
