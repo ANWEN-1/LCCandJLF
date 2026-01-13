@@ -19,5 +19,10 @@
         "src": "models/sheep.glb",
         "name": "羊符咒",
         "desc": "这样就能成为她梦境中主角吗?"
+    },
+    {
+        "src": "models/fan_knife.draco.glb",
+        "name": "彩虹蝴蝶刀",
+        "desc": "给刘老板制作的"
     }
 ]
