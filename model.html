@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的3D模型展示</title>
+
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+
+    <style>
+        /* === 基础风格 (保持一致) === */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #e8eef5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            margin-top: 20px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            text-decoration: none;
+            color: #666;
+            border: 1px solid #ccc;
+            padding: 8px 20px;
+            border-radius: 20px;
+            background: white;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #333;
+            color: white;
+            border-color: #333;
+        }
+
+        /* === 3D 容器 === */
+        .model-container {
+            max-width: 800px;
+            height: 500px;
+            /* 设置展示区的高度 */
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* === model-viewer 组件样式 === */
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background-color: #f0f2f5;
+            /* 模型背景色 */
+            --poster-color: transparent;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="index.html" class="back-btn">← 返回主页</a>
+        <h1>🧊 3D 实验室</h1>
+        <p>你可以用手指或鼠标拖动、缩放模型</p>
+    </header>
+
+    <div class="model-container">
+        <model-viewer 
+        src="models/robot.glb" 
+        alt="一个3D宇航员" auto-rotate camera-controls shadow-intensity="1"
+        touch-action="pan-y">
+
+
+        </model-viewer>
+    </div>
+
+</body>
+
+</html>
