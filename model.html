@@ -45,7 +45,6 @@
         .model-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            /* 自动适应列宽 */
             gap: 25px;
             max-width: 1200px;
             margin: 0 auto;
@@ -56,12 +55,10 @@
             background: white;
             border-radius: 20px;
             height: 300px;
-            /* 固定高度 */
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
             overflow: hidden;
             position: relative;
             cursor: pointer;
-            /* 鼠标变手型，提示可点击 */
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
@@ -70,16 +67,14 @@
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
         }
 
-        /* 列表里的模型：禁止交互！只做展示 */
+        /* 列表里的模型：禁止交互 */
         .model-card model-viewer {
             width: 100%;
             height: 100%;
             background-color: #fafafa;
-            /* 关键点：禁用鼠标事件，让点击事件能传递给父容器 */
             pointer-events: none;
         }
 
-        /* 卡片底部的文字说明 */
         .card-info {
             position: absolute;
             bottom: 0;
@@ -106,66 +101,89 @@
         /* === 3. 全屏弹窗 (Modal) === */
         .modal {
             display: none;
-            /* 默认隐藏 */
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.85);
-            /* 深色半透明背景 */
+            background-color: rgba(0, 0, 0, 0.9);
+            /* 背景更黑一点 */
             z-index: 9999;
             justify-content: center;
             align-items: center;
             backdrop-filter: blur(5px);
-            /* 背景模糊效果 */
         }
 
-        /* 弹窗显示时的状态 */
         .modal.active {
             display: flex;
             animation: fadeIn 0.3s ease;
         }
 
-        /* 弹窗里的内容容器 */
+        /* 弹窗内容容器 */
         .modal-content {
-            width: 90%;
-            height: 80%;
-            background: #fff;
-            border-radius: 20px;
-            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            /* 全屏铺满 */
             position: relative;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            background: transparent;
+            /* 透明背景，让模型悬浮在黑底上 */
         }
 
-        /* 弹窗里的大模型：允许交互！ */
+        /* 弹窗里的大模型 */
         .modal-content model-viewer {
             width: 100%;
             height: 100%;
-            background-color: #f5f5f5;
+            --poster-color: transparent;
         }
 
-        /* 关闭按钮 */
-        .close-btn {
+        /* === 新增：底部大大的退出按钮 === */
+        .exit-btn {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            /* 居中 */
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            font-size: 16px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            z-index: 1000;
+            /* 保证在模型上面 */
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .exit-btn:hover {
+            background-color: rgba(255, 255, 255, 1);
+            color: #333;
+        }
+
+        /* 右上角的关闭叉叉 (保留着作为备用) */
+        .close-icon {
+            position: absolute;
+            top: 30px;
+            right: 30px;
             width: 40px;
             height: 40px;
-            background: white;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
             border-radius: 50%;
             text-align: center;
             line-height: 40px;
             font-size: 24px;
             cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            z-index: 100;
-            font-weight: bold;
-            color: #333;
+            z-index: 1000;
+            transition: all 0.3s;
         }
 
-        .close-btn:hover {
-            background: #f0f0f0;
+        .close-icon:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
 
         @keyframes fadeIn {
@@ -188,15 +206,18 @@
         <p>点击模型查看大图细节</p>
     </header>
 
-    <div class="model-grid" id="grid-container">
-    </div>
+    <div class="model-grid" id="grid-container"></div>
 
     <div class="modal" id="model-modal">
         <div class="modal-content">
-            <div class="close-btn" onclick="closeModal()">×</div>
+            <div class="close-icon" onclick="closeModal()">×</div>
 
-            <model-viewer id="big-model" src="" auto-rotate camera-controls shadow-intensity="1" touch-action="pan-y">
+            <model-viewer id="big-model" src="" auto-rotate camera-controls shadow-intensity="1" touch-action="none">
             </model-viewer>
+
+            <button class="exit-btn" onclick="closeModal()">
+                <span>✕</span> 退出预览
+            </button>
         </div>
     </div>
 
@@ -205,19 +226,14 @@
         const modal = document.getElementById('model-modal');
         const bigModel = document.getElementById('big-model');
 
-        // === 1. 读取 models.json 并生成列表 ===
+        // 读取数据
         fetch('models.json')
             .then(response => response.json())
             .then(data => {
                 data.forEach(item => {
-                    // 创建卡片
                     const card = document.createElement('div');
                     card.className = 'model-card';
-
-                    // 点击卡片 -> 打开弹窗
-                    // 我们把模型的路径传给 openModal 函数
                     card.onclick = () => openModal(item.src);
-
                     card.innerHTML = `
                         <model-viewer 
                             src="${item.src}" 
@@ -225,40 +241,46 @@
                             rotation-per-second="30deg"
                             shadow-intensity="0.5">
                         </model-viewer>
-                        
                         <div class="card-info">
                             <h3>${item.name}</h3>
                             <p>${item.desc}</p>
                         </div>
                     `;
-
                     gridContainer.appendChild(card);
                 });
             })
             .catch(err => console.error("读取模型失败:", err));
 
-        // === 2. 打开弹窗逻辑 ===
+        // === 修复后的打开逻辑 ===
         function openModal(modelSrc) {
-            // 设置大模型的路径
-            bigModel.src = modelSrc;
-            // 显示弹窗
             modal.classList.add('active');
-            // 每次打开时重置相机的角度（可选）
-            bigModel.cameraOrbit = "0deg 75deg 105%";
+
+            // 为了防止卡住，我们先让它显示，再稍微等一丁点时间赋值 src
+            // 这样浏览器有时间准备 WebGL 环境
+            requestAnimationFrame(() => {
+                bigModel.src = modelSrc;
+                // 重置相机角度，避免保留上一个模型的位置
+                bigModel.cameraOrbit = "0deg 75deg 105%";
+            });
         }
 
-        // === 3. 关闭弹窗逻辑 ===
+        // === 修复后的关闭逻辑 ===
         function closeModal() {
             modal.classList.remove('active');
-            // 关闭后清空路径，节省资源，也能停止声音（如果有）
+
+            // 关键修复：立即清空 src 可能会导致页面闪烁或卡顿
+            // 我们改成：在动画结束后再清空，并且使用 null 而不是空字符串
             setTimeout(() => {
-                bigModel.src = "";
+                bigModel.src = null;
+                // 强制让 model-viewer 释放纹理内存（如果它支持的话）
+                // 这是一个 Hack，防止内存泄漏导致的卡顿
             }, 300);
         }
 
-        // 点击背景也能关闭
+        // 点击背景关闭
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
+            // 只有点击黑色背景或者内容区本身才关闭，防止点模型时误关
+            if (e.target === modal || e.target === document.querySelector('.modal-content')) {
                 closeModal();
             }
         });
