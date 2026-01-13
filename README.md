@@ -35,6 +35,16 @@ photos.json
 models.json
 [
     {
+      "src": "...",
+      "name": "疯转的机器人",
+      "speed": "200deg" 
+    },
+    {
+      "src": "...",
+      "name": "淡定的宇航员",
+      "speed": "5deg"
+    },
+    {
         "src": "https://modelviewer.dev/shared-assets/models/Astronaut.glb",
         "name": "太空宇航员",
         "desc": "Google 提供的示例模型"

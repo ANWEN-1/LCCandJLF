@@ -1,7 +1,23 @@
 [
     {
-        "src": "models/robot.glb",
-        "name": "太空宇航员",
-        "desc": "Google 提供的示例模型"
+        "src": "models/part.glb",
+        "name": "电脑烧烤架零件",
+        "desc": "用来增高的",
+        "speed": "100deg"
+    },
+    {
+        "src": "models/chopsticks.glb",
+        "name": "筷子和支架",
+        "desc": "示例模型"
+    },
+    {
+        "src": "models/horse.glb",
+        "name": "马符咒",
+        "desc": "高贵的马儿能驱除体内一切外力"
+    },
+    {
+        "src": "models/sheep.glb",
+        "name": "羊符咒",
+        "desc": "这样就能成为她梦境中主角吗?"
     }
 ]
