@@ -24,5 +24,10 @@
         "src": "assets/models/fan_knife.draco.glb",
         "name": "彩虹蝴蝶刀",
         "desc": "给刘老板制作的"
+    },
+    {
+        "src": "assets/models/Handle_style_of_the_door.glb",
+        "name": "门把手",
+        "desc": "防滑弯曲"
     }
 ]
