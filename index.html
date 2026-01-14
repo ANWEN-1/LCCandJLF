@@ -11,6 +11,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
@@ -388,6 +389,40 @@
         .btn-music {
             color: #2c3e50;
         }
+
+        /* === 页脚样式 === */
+        footer {
+            margin-top: 50px;
+            /* 离上面内容远一点 */
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* 社交图标容器 */
+        .social-links {
+            margin-top: 10px;
+        }
+
+        /* 社交图标样式 */
+        .social-links a {
+            text-decoration: none;
+            font-size: 24px;
+            margin: 0 10px;
+            transition: transform 0.3s;
+            display: inline-block;
+        }
+
+        .social-links a:hover {
+            transform: scale(1.2) rotate(10deg);
+            /* 鼠标放上去晃动一下 */
+        }
+
+        /* 黑夜模式适配 */
+        body.dark-mode footer {
+            color: #555;
+        }
     </style>
 </head>
 
@@ -438,7 +473,14 @@
             </a>
         </div>
     </div>
-
+    <footer>
+        <p>© 2026 你的名字 | Powered by GitHub Pages</p>
+        <div class="social-links">
+            <a href="https://github.com/你的用户名" target="_blank" title="我的 GitHub">🐙</a>
+            <a href="https://space.bilibili.com/你的UID" target="_blank" title="我的 B站">📺</a>
+            <a href="mailto:你的邮箱@gmail.com" title="给我发邮件">📧</a>
+        </div>
+    </footer>
     <script src="assets/js/theme.js"></script>
 
 </body>
