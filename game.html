@@ -1,246 +1,371 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>机器狗大冒险</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>五子棋对战</title>
     <style>
-        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; flex-direction: column; }
-        
-        /* 游戏容器 */
-        #game-container {
-            position: relative;
-            width: 800px;
-            height: 400px;
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            overflow: hidden;
-            border: 4px solid #333;
-        }
-
-        /* 画布 */
-        canvas { display: block; width: 100%; height: 100%; }
-
-        /* UI 界面 */
-        .ui-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f0f2f5;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            background: rgba(255,255,255,0.8);
-            z-index: 10;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
         }
 
-        h1 { margin: 0 0 20px 0; font-size: 40px; color: #333; }
-        p { font-size: 18px; color: #666; margin-bottom: 30px; }
+        h1 {
+            margin: 10px 0;
+            font-size: 28px;
+            color: #333;
+        }
 
-        .btn-start {
-            padding: 15px 40px;
-            font-size: 20px;
-            background: #FF7F50;
-            color: white;
-            border: none;
-            border-radius: 50px;
+        /* === 棋盘区域 === */
+        .game-wrapper {
+            position: relative;
+            padding: 15px;
+            background: #e0c39e;
+            /* 木头颜色 */
+            border-radius: 5px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 5px solid #8b5a2b;
+        }
+
+        canvas {
+            display: block;
             cursor: pointer;
-            transition: transform 0.2s;
-            box-shadow: 0 5px 15px rgba(255, 127, 80, 0.4);
+            background-color: #eabc80;
+            /* 棋盘底色 */
         }
-        .btn-start:hover { transform: scale(1.1); }
 
-        .score-board {
+        /* === 控制面板 === */
+        .status-bar {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .turn-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .stone-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 1px solid #999;
+        }
+
+        .black-stone {
+            background: black;
+        }
+
+        .white-stone {
+            background: white;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+            color: white;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-undo {
+            background-color: #f39c12;
+        }
+
+        .btn-restart {
+            background-color: #27ae60;
+        }
+
+        .back-link {
             position: absolute;
             top: 20px;
-            right: 20px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-            z-index: 5;
-        }
-
-        .back-btn {
-            position: absolute;
-            top: 20px; left: 20px;
+            left: 20px;
             text-decoration: none;
-            color: #333;
+            color: #555;
             font-weight: bold;
-            z-index: 20;
-            background: rgba(255,255,255,0.8);
+            background: white;
             padding: 5px 15px;
             border-radius: 20px;
         }
 
         /* === 黑夜模式适配 === */
-        body.dark-mode { background-color: #1a2340; }
-        body.dark-mode #game-container { background-color: #2b324d; border-color: #555; }
-        body.dark-mode .ui-layer { background: rgba(43, 50, 77, 0.9); }
-        body.dark-mode h1 { color: white; }
-        body.dark-mode p { color: #ccc; }
-        body.dark-mode .score-board { color: white; }
+        body.dark-mode {
+            background-color: #1a2340;
+        }
+
+        body.dark-mode h1 {
+            color: white;
+        }
+
+        body.dark-mode .status-bar {
+            background: #2b324d;
+            color: white;
+        }
+
+        body.dark-mode .back-link {
+            background: #333;
+            color: white;
+        }
     </style>
 </head>
+
 <body>
 
-    <a href="index.html" class="back-btn">← 退出游戏</a>
+    <a href="index.html" class="back-link">← 返回主页</a>
+    <h1>⚫ 五子棋对战 ⚪</h1>
 
-    <div id="game-container">
-        <div class="score-board">得分: <span id="score">0</span></div>
-        
-        <div id="menu" class="ui-layer">
-            <h1>🐕 机器狗大冒险</h1>
-            <p>按下 <b>空格键</b> 或 <b>点击屏幕</b> 跳跃躲避障碍！</p>
-            <button class="btn-start" onclick="startGame()">开始游戏</button>
+    <div class="game-wrapper">
+        <canvas id="board" width="450" height="450"></canvas>
+    </div>
+
+    <div class="status-bar">
+        <div class="turn-indicator">
+            当前回合:
+            <div id="current-stone" class="stone-icon black-stone"></div>
+            <span id="player-text">黑方</span>
         </div>
-
-        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        <button class="btn btn-undo" onclick="undo()">悔棋</button>
+        <button class="btn btn-restart" onclick="restart()">重来</button>
     </div>
 
     <script src="assets/js/theme.js"></script>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
+        const canvas = document.getElementById('board');
         const ctx = canvas.getContext('2d');
-        const menu = document.getElementById('menu');
-        const scoreEl = document.getElementById('score');
+        const turnIcon = document.getElementById('current-stone');
+        const playerText = document.getElementById('player-text');
 
-        // 游戏变量
-        let gameRunning = false;
-        let score = 0;
-        let frameCount = 0;
-        let speed = 5;
+        // === 游戏配置 ===
+        const GRID_SIZE = 15; // 15x15 棋盘
+        const CELL_SIZE = 30; // 每个格子 30px
+        const PADDING = 15;   // 边缘留白
 
-        // 🐕 主角：机器狗
-        const dog = {
-            x: 50,
-            y: 300,
-            width: 40,
-            height: 40,
-            dy: 0,
-            jumpPower: -12,
-            gravity: 0.6,
-            ground: 300,
-            color: '#FF7F50'
-        };
+        // 状态变量
+        let board = []; // 0:空, 1:黑, 2:白
+        let currentPlayer = 1; // 1:黑先
+        let history = []; // 记录每一步，用于悔棋
+        let isGameOver = false;
 
-        // 🌵 障碍物数组
-        let obstacles = [];
-
-        function startGame() {
-            gameRunning = true;
-            score = 0;
-            speed = 5;
-            obstacles = [];
-            dog.y = dog.ground;
-            menu.style.display = 'none';
-            scoreEl.innerText = '0';
-            animate();
+        // 初始化
+        function init() {
+            // 清空棋盘数组
+            board = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(0));
+            currentPlayer = 1;
+            history = [];
+            isGameOver = false;
+            updateUI();
+            drawBoard();
         }
 
-        function animate() {
-            if (!gameRunning) return;
-
-            requestAnimationFrame(animate);
+        // 1. 绘制棋盘线
+        function drawBoard() {
+            // 清空画布
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            frameCount++;
 
-            // 1. 更新狗狗物理
-            dog.dy += dog.gravity;
-            dog.y += dog.dy;
-
-            // 地面碰撞检测
-            if (dog.y > dog.ground) {
-                dog.y = dog.ground;
-                dog.dy = 0;
-            }
-
-            // 画狗狗 (简单的方块代替，以后你可以换成图片)
-            ctx.fillStyle = dog.color;
-            ctx.fillRect(dog.x, dog.y, dog.width, dog.height);
-            // 画个眼睛，让它像只狗
-            ctx.fillStyle = 'white';
-            ctx.fillRect(dog.x + 25, dog.y + 5, 10, 10);
-
-            // 2. 生成障碍物 (每 100 帧生成一个)
-            if (frameCount % 100 === 0) {
-                let height = Math.random() * 40 + 20; // 随机高度
-                obstacles.push({
-                    x: canvas.width,
-                    y: 340 - height,
-                    width: 30,
-                    height: height + 40, // 这里的逻辑是为了贴地
-                    color: '#9370DB'
-                });
-                
-                // 随着时间加速
-                if (score % 5 === 0) speed += 0.1;
-            }
-
-            // 3. 更新障碍物
-            for (let i = 0; i < obstacles.length; i++) {
-                let obs = obstacles[i];
-                obs.x -= speed;
-
-                // 画障碍物
-                ctx.fillStyle = obs.color;
-                ctx.fillRect(obs.x, 340 - obs.height + 40, obs.width, obs.height); // 修正坐标
-
-                // 计分：如果你跳过了它
-                if (obs.x + obs.width < dog.x && !obs.passed) {
-                    score++;
-                    scoreEl.innerText = score;
-                    obs.passed = true;
-                }
-
-                // 移除屏幕外的
-                if (obs.x < -50) {
-                    obstacles.splice(i, 1);
-                    i--;
-                }
-
-                // 🔥 碰撞检测 (简单的矩形碰撞)
-                if (
-                    dog.x < obs.x + obs.width &&
-                    dog.x + dog.width > obs.x &&
-                    dog.y < (340 - obs.height + 40) + obs.height &&
-                    dog.y + dog.height > (340 - obs.height + 40)
-                ) {
-                    gameOver();
-                }
-            }
-
-            // 画地面线
             ctx.beginPath();
-            ctx.moveTo(0, 340);
-            ctx.lineTo(800, 340);
-            ctx.strokeStyle = '#333';
-            ctx.stroke();
-        }
+            ctx.strokeStyle = "#555";
+            ctx.lineWidth = 1;
 
-        function jump() {
-            if (dog.y === dog.ground && gameRunning) {
-                dog.dy = dog.jumpPower;
+            for (let i = 0; i < GRID_SIZE; i++) {
+                // 横线
+                ctx.moveTo(PADDING + i * CELL_SIZE, PADDING);
+                ctx.lineTo(PADDING + i * CELL_SIZE, PADDING + (GRID_SIZE - 1) * CELL_SIZE);
+                // 竖线
+                ctx.moveTo(PADDING, PADDING + i * CELL_SIZE);
+                ctx.lineTo(PADDING + (GRID_SIZE - 1) * CELL_SIZE, PADDING + i * CELL_SIZE);
+            }
+            ctx.stroke();
+
+            // 画天元和星位 (中间的小黑点)
+            drawDot(7, 7); // 天元
+            drawDot(3, 3); drawDot(3, 11);
+            drawDot(11, 3); drawDot(11, 11);
+
+            // 重新画所有棋子
+            for (let i = 0; i < history.length; i++) {
+                let step = history[i];
+                drawPiece(step.x, step.y, step.role, i === history.length - 1);
             }
         }
 
-        function gameOver() {
-            gameRunning = false;
-            menu.style.display = 'flex';
-            menu.innerHTML = `
-                <h1>💥 撞车啦!</h1>
-                <p>你的得分: <b>${score}</b></p>
-                <button class="btn-start" onclick="startGame()">再试一次</button>
-            `;
+        // 画星位小点
+        function drawDot(x, y) {
+            ctx.beginPath();
+            ctx.arc(PADDING + x * CELL_SIZE, PADDING + y * CELL_SIZE, 3, 0, Math.PI * 2);
+            ctx.fillStyle = "black";
+            ctx.fill();
         }
 
-        // 操作监听
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') jump();
+        // 2. 绘制棋子
+        function drawPiece(x, y, role, isLast) {
+            const centerX = PADDING + x * CELL_SIZE;
+            const centerY = PADDING + y * CELL_SIZE;
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 13, 0, Math.PI * 2);
+
+            // 棋子渐变色，看起来更有立体感
+            const gradient = ctx.createRadialGradient(centerX - 3, centerY - 3, 2, centerX, centerY, 13);
+            if (role === 1) { // 黑棋
+                gradient.addColorStop(0, "#555");
+                gradient.addColorStop(1, "black");
+            } else { // 白棋
+                gradient.addColorStop(0, "white");
+                gradient.addColorStop(1, "#ddd");
+            }
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // 如果是最后一步，画个红色标记
+            if (isLast) {
+                ctx.beginPath();
+                ctx.moveTo(centerX - 5, centerY);
+                ctx.lineTo(centerX + 5, centerY);
+                ctx.moveTo(centerX, centerY - 5);
+                ctx.lineTo(centerX, centerY + 5);
+                ctx.strokeStyle = "red";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        // 3. 点击落子
+        canvas.addEventListener('mousedown', (e) => {
+            if (isGameOver) return;
+
+            // 获取点击坐标
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            // 计算最近的交叉点
+            // Math.round 四舍五入，确保点在格子中间也能吸附到线上
+            const x = Math.round((clickX - PADDING) / CELL_SIZE);
+            const y = Math.round((clickY - PADDING) / CELL_SIZE);
+
+            // 边界检查 & 是否已有子
+            if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE && board[y][x] === 0) {
+                // 落子
+                board[y][x] = currentPlayer;
+                history.push({ x, y, role: currentPlayer });
+
+                drawBoard(); // 重绘
+
+                // 检查胜负
+                if (checkWin(x, y, currentPlayer)) {
+                    isGameOver = true;
+                    // 延时一点弹出，为了让棋子先画出来
+                    setTimeout(() => {
+                        alert((currentPlayer === 1 ? "黑方" : "白方") + " 获胜！🎉");
+                    }, 10);
+                } else {
+                    // 切换回合
+                    currentPlayer = currentPlayer === 1 ? 2 : 1;
+                    updateUI();
+                }
+            }
         });
-        document.addEventListener('touchstart', jump);
-        canvas.addEventListener('click', jump);
+
+        // 4. 胜负判断算法 (核心)
+        function checkWin(x, y, role) {
+            // 四个方向：横、竖、左斜、右斜
+            const directions = [
+                [1, 0], [0, 1], [1, 1], [1, -1]
+            ];
+
+            for (let dir of directions) {
+                let count = 1; // 自己算一个
+
+                // 向一个方向找
+                for (let i = 1; i < 5; i++) {
+                    const nx = x + dir[0] * i;
+                    const ny = y + dir[1] * i;
+                    if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && board[ny][nx] === role) {
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+
+                // 向相反方向找
+                for (let i = 1; i < 5; i++) {
+                    const nx = x - dir[0] * i;
+                    const ny = y - dir[1] * i;
+                    if (nx >= 0 && nx < GRID_SIZE && ny >= 0 && ny < GRID_SIZE && board[ny][nx] === role) {
+                        count++;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (count >= 5) return true;
+            }
+            return false;
+        }
+
+        // 5. 悔棋逻辑
+        function undo() {
+            if (isGameOver) {
+                alert("游戏已结束，请点击重来");
+                return;
+            }
+            if (history.length === 0) return;
+
+            // 移除最后一步
+            const lastMove = history.pop();
+            board[lastMove.y][lastMove.x] = 0;
+
+            // 切换回上一手
+            currentPlayer = lastMove.role;
+
+            updateUI();
+            drawBoard();
+        }
+
+        function restart() {
+            if (confirm("确定要重新开始吗？")) {
+                init();
+            }
+        }
+
+        function updateUI() {
+            if (currentPlayer === 1) {
+                turnIcon.className = "stone-icon black-stone";
+                playerText.innerText = "黑方落子";
+            } else {
+                turnIcon.className = "stone-icon white-stone";
+                playerText.innerText = "白方落子";
+            }
+        }
+
+        // 启动
+        init();
 
     </script>
 </body>
+
 </html>
