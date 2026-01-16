@@ -456,7 +456,7 @@
         <p>这是我在 GitHub Pages 搭建的第一个网页。</p>
         <p>现在它拥有了头像和昼夜切换功能！</p>
         <div class="action-grid">
-            <a href="album.html" class="btn" style="background: #FF7F50;">
+            <a href="javascript:void(0)" onclick="checkAlbumPassword()" class="btn" style="background: #FF7F50;">
                 <span>📸</span> 相册
             </a>
 
@@ -479,6 +479,24 @@
             </a>
         </div>
     </div>
+    <script>
+        function checkAlbumPassword() {
+            // 1. 弹出一个输入框
+            var password = prompt("🔒 这是一个私密相册，请输入访问密码：");
+
+            // 2. 在这里修改你的密码，比如把 "123456" 改成你自己想要的
+            var correctPassword = "123456";
+
+            // 3. 判断密码
+            if (password === correctPassword) {
+                // 密码正确，跳转页面
+                window.location.href = "album.html";
+            } else if (password !== null) {
+                // 密码错误（且用户没有点取消）
+                alert("🚫 密码错误，禁止访问！");
+            }
+        }
+    </script>
     <footer>
         <p>© 2026 你的名字 | Powered by GitHub Pages</p>
         <div class="social-links">
