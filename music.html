@@ -6,237 +6,321 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的随身听</title>
     <style>
-        /* === 黑夜模式通用样式 (复制到所有页面) === */
-        body.dark-mode {
-            background-color: #1a2340 !important;
-            /* 背景变深蓝黑 */
-            color: #e0e0e0 !important;
-            /* 文字变灰白 */
+        /* === 播放列表搜索框 === */
+        .playlist-search {
+            padding: 0 20px 15px;
+            /* 上左右下的间距 */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            /* 下划线分割 */
+            margin-bottom: 10px;
         }
 
-        /* 让所有类型的卡片变黑 (相册卡片、3D卡片、普通卡片) */
-        body.dark-mode .card,
-        body.dark-mode .photo-card,
-        body.dark-mode .model-card,
-        body.dark-mode .modal-content {
-            background-color: #2b324d !important;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
-            color: #fff !important;
-        }
-
-        /* 让标题和文字变白 */
-        body.dark-mode h1,
-        body.dark-mode h2,
-        body.dark-mode h3,
-        body.dark-mode p {
-            color: #fff !important;
-        }
-
-        /* 让顶部返回按钮适配 */
-        body.dark-mode .back-btn {
-            background-color: #384260 !important;
-            color: #fff !important;
-            border-color: #555 !important;
-        }
-
-        /* 3D 模型的背景色特殊处理 */
-        body.dark-mode model-viewer {
-            background-color: #2b324d !important;
-        }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+        .playlist-search input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
             color: white;
-            overflow: hidden;
-            /* 禁止整个页面滚动 */
-        }
-
-        header {
-            padding: 20px;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 10;
-        }
-
-        .back-btn {
-            text-decoration: none;
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            padding: 8px 20px;
-            border-radius: 20px;
-            background: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(5px);
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+            /* 防止宽度撑破容器 */
             transition: 0.3s;
         }
 
-        .back-btn:hover {
-            background: white;
-            color: #333;
+        .playlist-search input:focus {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
         }
 
-        /* === 主播放器容器 === */
-        .player-container {
+        /* === 基础设置 === */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'PingFang SC', sans-serif;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
             display: flex;
-            flex-direction: row;
-            align-items: center;
             justify-content: center;
-            height: 100%;
-            gap: 50px;
-            padding: 20px;
-            max-width: 1000px;
-            margin: 0 auto;
+            align-items: center;
+            color: white;
+            background: #111;
         }
 
-        /* === 左侧：唱片封面 === */
-        .disk-area {
+        /* 背景模糊层 */
+        .bg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            filter: blur(40px) brightness(0.6);
+            z-index: 1;
+            transform: scale(1.1);
+            transition: background-image 0.5s;
+        }
+
+        /* 主容器 */
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 1200px;
+            height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* 左侧信息 */
+        .info-side {
+            flex: 1;
+            padding-right: 50px;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            width: 350px;
-        }
-
-        .disk {
-            width: 300px;
-            height: 300px;
-            background: black;
-            border-radius: 50%;
-            display: flex;
             justify-content: center;
-            align-items: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            animation: rotate 20s linear infinite;
-            animation-play-state: paused;
-            /* 默认暂停 */
-            border: 5px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* 唱片转动动画 */
-        .disk.playing {
-            animation-play-state: running;
-        }
-
-        .disk img {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #333;
-        }
-
-        .song-info {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .song-info h2 {
-            margin: 0;
-            font-size: 24px;
-        }
-
-        .song-info p {
-            margin: 5px 0;
+        .tag {
+            font-size: 16px;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
             opacity: 0.8;
         }
 
-        /* === 右侧：歌词区域 === */
-        .lyrics-area {
-            width: 400px;
-            height: 400px;
-            /* 蒙版效果：上下淡出 */
-            mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
-            overflow: hidden;
-            position: relative;
+        h1.title {
+            font-size: 64px;
+            margin: 0;
+            font-weight: bold;
+            line-height: 1.2;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
 
-        .lyrics-list {
+        h2.artist {
+            font-size: 32px;
+            margin: 10px 0 40px 0;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .current-lyric {
+            font-size: 24px;
+            font-weight: 300;
+            opacity: 0.8;
+            min-height: 40px;
+            margin-bottom: 40px;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 底部控制栏 */
+        .control-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 500px;
+        }
+
+        .progress-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+        }
+
+        input[type=range] {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        /* 按钮组 */
+        .buttons {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            transform: scale(1.1);
+            text-shadow: 0 0 10px white;
+        }
+
+        .btn-main {
+            width: 60px;
+            height: 60px;
+            border: 2px solid white;
+            border-radius: 50%;
+            font-size: 24px;
+        }
+
+        .btn-side {
+            font-size: 30px;
+            opacity: 0.8;
+        }
+
+        /* 右侧封面 */
+        .cover-side {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .album-art {
+            width: 450px;
+            height: 450px;
+            object-fit: cover;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transition: transform 0.5s;
+        }
+
+        .playing .album-art {
+            transform: scale(1.02);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+        }
+
+        /* 播放列表侧边栏 (默认隐藏) */
+        .playlist-drawer {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 350px;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            z-index: 100;
+            transition: 0.4s ease;
+            padding: 20px;
+            box-sizing: border-box;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .playlist-drawer.open {
+            right: 0;
+        }
+
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .playlist-items {
             list-style: none;
             padding: 0;
             margin: 0;
-            text-align: center;
-            transition: transform 0.3s ease-out;
-            /* 滚动动画 */
+            overflow-y: auto;
+            flex: 1;
         }
 
-        .lyrics-list li {
-            height: 40px;
-            /* 每一行的高度 */
-            line-height: 40px;
-            font-size: 16px;
-            opacity: 0.5;
-            transition: all 0.3s;
-        }
-
-        /* 当前高亮的歌词 */
-        .lyrics-list li.active {
-            color: #fff;
-            font-size: 22px;
-            font-weight: bold;
-            opacity: 1;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-        }
-
-        /* === 底部控制条 === */
-        .controls {
-            margin-top: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .btn-play {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: none;
-            background: white;
-            color: #764ba2;
-            font-size: 20px;
+        .playlist-items li {
+            padding: 15px;
+            border-radius: 10px;
             cursor: pointer;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: 0.2s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* 进度条样式 */
-        input[type=range] {
-            width: 200px;
-            accent-color: white;
+        .playlist-items li:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        /* === 手机适配 === */
+        .playlist-items li.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .playlist-items li .song-idx {
+            font-size: 12px;
+            opacity: 0.5;
+            margin-right: 10px;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            z-index: 20;
+            color: white;
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+        }
+
+        /* 手机适配 */
         @media (max-width: 768px) {
-            .player-container {
-                flex-direction: column;
-                gap: 20px;
+            .container {
+                flex-direction: column-reverse;
+                justify-content: center;
+                text-align: center;
             }
 
-            .disk {
-                width: 200px;
-                height: 200px;
+            .info-side {
+                padding-right: 0;
+                align-items: center;
+                margin-top: 30px;
             }
 
-            .disk img {
-                width: 140px;
-                height: 140px;
+            .cover-side {
+                justify-content: center;
+                flex: none;
             }
 
-            .lyrics-area {
-                height: 200px;
-                width: 100%;
+            .album-art {
+                width: 280px;
+                height: 280px;
             }
 
-            .song-info h2 {
-                font-size: 20px;
+            h1.title {
+                font-size: 32px;
+            }
+
+            .playlist-drawer {
+                width: 80%;
+                right: -100%;
             }
         }
     </style>
@@ -244,32 +328,48 @@
 
 <body>
 
-    <header>
-        <a href="index.html" class="back-btn">← 退出播放</a>
-    </header>
+    <div class="bg-layer" id="bg-layer"></div>
+    <a href="index.html" class="back-btn">← 返回</a>
 
-    <div class="player-container">
+    <div class="container" id="player-container">
+        <div class="info-side">
+            <div class="tag">我的精选歌单</div>
+            <h1 class="title" id="song-title">Loading...</h1>
+            <h2 class="artist" id="song-artist">...</h2>
+            <div class="current-lyric" id="current-lyric-line">准备播放...</div>
 
-        <div class="disk-area">
-            <div class="disk" id="disk">
-                <img src="" id="cover-img" alt="封面">
-            </div>
-            <div class="song-info">
-                <h2 id="song-title">加载中...</h2>
-                <p id="song-artist">...</p>
-
-                <div class="controls">
-                    <button class="btn-play" id="play-btn">▶</button>
+            <div class="control-bar">
+                <div class="progress-area">
+                    <span id="curr-time">00:00</span>
                     <input type="range" id="progress-bar" value="0" step="0.1">
+                    <span id="total-time">00:00</span>
+                </div>
+
+                <div class="buttons">
+                    <button class="btn btn-side" onclick="togglePlaylist()">📜</button>
+                    <button class="btn btn-side" onclick="prevSong()">⏮️</button>
+                    <button class="btn btn-main" id="play-btn">▶</button>
+                    <button class="btn btn-side" onclick="nextSong()">⏭️</button>
+                    <button class="btn btn-side" style="opacity:0; cursor:default">Repeating</button>
                 </div>
             </div>
         </div>
 
-        <div class="lyrics-area">
-            <ul class="lyrics-list" id="lyrics-box">
-            </ul>
+        <div class="cover-side">
+            <img src="" class="album-art" id="album-art">
         </div>
+    </div>
 
+    <div class="playlist-drawer" id="playlist-drawer">
+        <div class="drawer-header">
+            <h3>播放列表 (<span id="song-count">0</span>)</h3>
+            <span style="cursor:pointer" onclick="togglePlaylist()">✕</span>
+        </div>
+        <div class="playlist-search">
+            <input type="text" id="playlist-search-input" placeholder="🔍 搜索歌名或歌手...">
+        </div>
+        <ul class="playlist-items" id="playlist-box">
+        </ul>
     </div>
 
     <audio id="audio-player"></audio>
@@ -278,129 +378,178 @@
         const audio = document.getElementById('audio-player');
         const playBtn = document.getElementById('play-btn');
         const progressBar = document.getElementById('progress-bar');
-        const lyricsBox = document.getElementById('lyrics-box');
-        const disk = document.getElementById('disk');
+        const bgLayer = document.getElementById('bg-layer');
+        const albumArt = document.getElementById('album-art');
+        const lyricLine = document.getElementById('current-lyric-line');
+        const playlistBox = document.getElementById('playlist-box');
 
-        let lyricsData = []; // 存解析后的歌词 [{time: 12.3, text: "歌词"}]
-        let isPlaying = false;
+        let songs = [];       // 所有歌曲数据
+        let currentIndex = 0; // 当前播放第几首
+        let lyricsData = [];  // 当前歌词
 
-        // 1. 获取数据
+        // 1. 初始化
         fetch('data/music.json')
             .then(res => res.json())
             .then(data => {
-                const song = data[0]; // 这里默认取第一首歌
-
-                // 加载界面信息
-                document.getElementById('song-title').innerText = song.title;
-                document.getElementById('song-artist').innerText = song.artist;
-                document.getElementById('cover-img').src = song.cover;
-                audio.src = song.src;
-
-                // 解析歌词
-                parseLyrics(song.lrc);
+                songs = data;
+                document.getElementById('song-count').innerText = songs.length;
+                renderPlaylist();
+                loadSong(0); // 默认加载第一首
             });
 
-        // 2. 解析 LRC 格式的函数
-        function parseLyrics(lrcString) {
-            const lines = lrcString.split('\n');
-            lyricsData = [];
+        // 2. 加载歌曲函数
+        function loadSong(index) {
+            currentIndex = index;
+            const song = songs[index];
 
+            document.getElementById('song-title').innerText = song.title;
+            document.getElementById('song-artist').innerText = song.artist;
+            albumArt.src = song.cover;
+            bgLayer.style.backgroundImage = `url(${song.cover})`;
+            audio.src = song.src;
+
+            // 解析歌词
+            if (song.lrc) parseLyrics(song.lrc);
+            else lyricLine.innerText = "纯音乐 / 暂无歌词";
+
+            // 更新列表的高亮状态
+            // updatePlaylistHighlight();
+            // 重新渲染列表（保持当前的搜索状态），这样高亮会自动更新
+            renderPlaylist(document.getElementById('playlist-search-input').value);
+
+            // 如果已经在播放状态，切歌后自动播放
+            if (!audio.paused || playBtn.innerText === "⏸") {
+                audio.play();
+                playBtn.innerText = "⏸";
+                document.getElementById('player-container').classList.add('playing');
+            }
+        }
+
+        // 3. 播放控制
+        function togglePlay() {
+            if (audio.paused) {
+                audio.play();
+                playBtn.innerText = "⏸";
+                document.getElementById('player-container').classList.add('playing');
+            } else {
+                audio.pause();
+                playBtn.innerText = "▶";
+                document.getElementById('player-container').classList.remove('playing');
+            }
+        }
+        playBtn.addEventListener('click', togglePlay);
+
+        // 下一首
+        function nextSong() {
+            let newIndex = currentIndex + 1;
+            if (newIndex >= songs.length) newIndex = 0; // 循环到第一首
+            loadSong(newIndex);
+            audio.play(); // 切歌自动播放
+            playBtn.innerText = "⏸";
+        }
+
+        // 上一首
+        function prevSong() {
+            let newIndex = currentIndex - 1;
+            if (newIndex < 0) newIndex = songs.length - 1; // 循环到最后一首
+            loadSong(newIndex);
+            audio.play();
+            playBtn.innerText = "⏸";
+        }
+
+        // 自动播放下一首
+        audio.addEventListener('ended', nextSong);
+
+        // 4. 进度条与歌词
+        audio.addEventListener('timeupdate', () => {
+            const percent = (audio.currentTime / audio.duration) * 100 || 0;
+            progressBar.value = percent;
+            document.getElementById('curr-time').innerText = formatTime(audio.currentTime);
+            document.getElementById('total-time').innerText = formatTime(audio.duration || 0);
+
+            // 歌词滚动
+            if (lyricsData.length > 0) {
+                for (let i = 0; i < lyricsData.length; i++) {
+                    if (audio.currentTime >= lyricsData[i].time) {
+                        lyricLine.innerText = lyricsData[i].text;
+                    } else { break; }
+                }
+            }
+        });
+
+        progressBar.addEventListener('input', (e) => {
+            const time = (e.target.value / 100) * audio.duration;
+            audio.currentTime = time;
+        });
+
+        // 5. 播放列表逻辑
+        // ... (在原来的代码中找到 renderPlaylist 函数并替换) ...
+
+        // 升级版：支持筛选的渲染函数
+        function renderPlaylist(keyword = "") {
+            playlistBox.innerHTML = '';
+
+            // 遍历所有歌曲
+            songs.forEach((song, i) => {
+                // 1. 检查是否匹配搜索关键词 (转小写比较，实现模糊搜索)
+                const matchTitle = song.title.toLowerCase().includes(keyword.toLowerCase());
+                const matchArtist = song.artist.toLowerCase().includes(keyword.toLowerCase());
+
+                // 只有匹配成功（或者没有输入关键词）才显示
+                if (matchTitle || matchArtist || keyword === "") {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div><span class="song-idx">${i + 1}</span> ${song.title}</div>
+                        <span style="font-size:12px; opacity:0.6">${song.artist}</span>
+                    `;
+
+                    // 高亮判断：注意这里用的是 i (原始索引)，即使搜索过滤了，索引也不会乱
+                    if (i === currentIndex) li.classList.add('active');
+
+                    li.onclick = () => {
+                        loadSong(i); // 加载原始列表中的第 i 首
+                        audio.play();
+                        playBtn.innerText = "⏸";
+                    };
+                    playlistBox.appendChild(li);
+                }
+            });
+        }
+
+        // 监听搜索框输入
+        document.getElementById('playlist-search-input').addEventListener('input', (e) => {
+            renderPlaylist(e.target.value); // 每次输入都重新渲染列表
+        });
+
+        function updatePlaylistHighlight() {
+            const items = playlistBox.querySelectorAll('li');
+            items.forEach(item => item.classList.remove('active'));
+            if (items[currentIndex]) items[currentIndex].classList.add('active');
+        }
+
+        function togglePlaylist() {
+            document.getElementById('playlist-drawer').classList.toggle('open');
+        }
+
+        // 工具函数
+        function formatTime(s) {
+            let m = Math.floor(s / 60);
+            s = Math.floor(s % 60);
+            return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+        }
+        function parseLyrics(lrc) {
+            const lines = lrc.split('\n');
+            lyricsData = [];
             lines.forEach(line => {
-                // 正则表达式匹配 [00:12.34]
                 const match = line.match(/\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/);
                 if (match) {
-                    const minutes = parseInt(match[1]);
-                    const seconds = parseInt(match[2]);
-                    const milliseconds = parseInt(match[3]);
-                    const text = match[4].trim();
-
-                    // 把时间全部转换成“秒”
-                    const time = minutes * 60 + seconds + milliseconds / 100;
-
-                    if (text) { // 只要有内容的行
-                        lyricsData.push({ time, text });
-                    }
+                    const t = parseInt(match[1]) * 60 + parseInt(match[2]) + parseInt(match[3]) / 100;
+                    lyricsData.push({ time: t, text: match[4].trim() });
                 }
             });
-
-            renderLyrics();
+            lyricsData.reverse(); // 反转为了方便查找
         }
-
-        // 3. 渲染歌词到页面
-        function renderLyrics() {
-            lyricsBox.innerHTML = '';
-            lyricsData.forEach((line, index) => {
-                const li = document.createElement('li');
-                li.innerText = line.text;
-                li.dataset.index = index; // 记下索引
-                lyricsBox.appendChild(li);
-            });
-        }
-
-        // 4. 监听音乐播放进度 (最核心的同步逻辑)
-        audio.addEventListener('timeupdate', () => {
-            // 更新进度条
-            progressBar.value = (audio.currentTime / audio.duration) * 100 || 0;
-
-            // 寻找当前应该高亮的那一行
-            // 算法：找最后一个“时间小于当前时间”的行
-            let activeIndex = -1;
-            for (let i = 0; i < lyricsData.length; i++) {
-                if (audio.currentTime >= lyricsData[i].time) {
-                    activeIndex = i;
-                } else {
-                    break; // 只要找到一个比当前时间大的，后面的肯定更大了，直接停
-                }
-            }
-
-            // 更新界面
-            if (activeIndex !== -1) {
-                updateActiveLyric(activeIndex);
-            }
-        });
-
-        // 5. 歌词滚动逻辑
-        function updateActiveLyric(index) {
-            // 先移除所有的高亮
-            const activeLi = lyricsBox.querySelector('.active');
-            if (activeLi) activeLi.classList.remove('active');
-
-            // 给当前的加高亮
-            const lis = lyricsBox.querySelectorAll('li');
-            if (lis[index]) {
-                lis[index].classList.add('active');
-
-                // === 计算滚动位置 ===
-                // 每一行高 40px。如果你想让第 index 行居中：
-                // 偏移量 = (index * 40) - (容器高度的一半) + (一行高度的一半)
-                // 容器高度 400，一半是 200。
-                const offset = (index * 40) - 200 + 20;
-                lyricsBox.style.transform = `translateY(-${offset}px)`;
-            }
-        }
-
-        // 6. 播放/暂停控制
-        playBtn.addEventListener('click', () => {
-            if (isPlaying) {
-                audio.pause();
-                disk.classList.remove('playing');
-                playBtn.innerText = "▶";
-            } else {
-                audio.play();
-                disk.classList.add('playing');
-                playBtn.innerText = "⏸";
-            }
-            isPlaying = !isPlaying;
-        });
-
-        // 7. 进度条拖拽
-        progressBar.addEventListener('input', (e) => {
-            const seekTime = (e.target.value / 100) * audio.duration;
-            audio.currentTime = seekTime;
-        });
-
     </script>
-    <script src="assets/js/theme.js"></script>
 </body>
 
 </html>

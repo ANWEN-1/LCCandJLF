@@ -6,6 +6,126 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的个人主页</title>
     <style>
+        /* === 搜索框容器 === */
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 320px;
+            margin: 20px 0;
+            z-index: 100;
+            /* 保证弹出的菜单盖在下面按钮之上 */
+        }
+
+        /* 输入框本体 */
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            padding-left: 45px;
+            /* 给左边的图标留位置 */
+            border-radius: 30px;
+            border: 2px solid #e0e0e0;
+            background: #fff;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s;
+            box-sizing: border-box;
+            /* 防止宽度溢出 */
+        }
+
+        /* 搜索小图标 */
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 16px;
+        }
+
+        /* 输入框激活状态 */
+        .search-input:focus {
+            border-color: #87CEEB;
+            box-shadow: 0 0 10px rgba(135, 206, 235, 0.3);
+        }
+
+        /* === 搜索结果下拉菜单 === */
+        .search-results {
+            position: absolute;
+            top: 50px;
+            /* 在输入框下面 */
+            left: 0;
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            max-height: 300px;
+            overflow-y: auto;
+            /* 内容多了可以滚动 */
+            display: none;
+            /* 默认隐藏 */
+            text-align: left;
+            overflow: hidden;
+        }
+
+        /* 每一条搜索结果 */
+        .search-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #333;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .search-item:hover {
+            background: #f9f9f9;
+            padding-left: 20px;
+            /* 悬停时稍微右移 */
+        }
+
+        .search-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-item .type-icon {
+            font-size: 18px;
+        }
+
+        .search-item .item-title {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .search-item .item-sub {
+            font-size: 12px;
+            color: #888;
+            margin-left: auto;
+        }
+
+        /* 黑夜模式适配 */
+        body.dark-mode .search-input {
+            background: #2b324d;
+            border-color: #444;
+            color: white;
+        }
+
+        body.dark-mode .search-results {
+            background: #2b324d;
+            border: 1px solid #444;
+        }
+
+        body.dark-mode .search-item {
+            border-bottom-color: #444;
+            color: #eee;
+        }
+
+        body.dark-mode .search-item:hover {
+            background: #384260;
+        }
+
         /* === 1. 网页整体布局 === */
         body {
             font-family: Arial, sans-serif;
@@ -455,6 +575,11 @@
         <h1 id="my-title">👋 你好，世界！</h1>
         <p>这是我在 GitHub Pages 搭建的第一个网页。</p>
         <p>现在它拥有了头像和昼夜切换功能！</p>
+        <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="global-search" placeholder="搜索 教程 / 音乐 / 功能...">
+            <div class="search-results" id="search-results-box"></div>
+        </div>
         <div class="action-grid">
             <a href="javascript:void(0)" onclick="checkAlbumPassword()" class="btn" style="background: #FF7F50;">
                 <span>📸</span> 相册
@@ -485,7 +610,7 @@
             var password = prompt("🔒 这是一个私密相册，请输入访问密码：");
 
             // 2. 在这里修改你的密码，比如把 "123456" 改成你自己想要的
-            var correctPassword = "123456";
+            var correctPassword = "密码";
 
             // 3. 判断密码
             if (password === correctPassword) {
@@ -502,11 +627,110 @@
         <div class="social-links">
             <a href="https://github.com/你的用户名" target="_blank" title="我的 GitHub">🐙</a>
             <a href="https://space.bilibili.com/你的UID" target="_blank" title="我的 B站">📺</a>
-            <a href="mailto:你的邮箱@gmail.com" title="给我发邮件">📧</a>
+            <a href="javascript:void(0);" onclick="copyText('753161269@qq.com')" title="QQ: 753161269@qq.com">📧</a>
+
         </div>
     </footer>
+    <script>
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('QQ号码已复制到剪贴板！');
+            }).catch(err => {
+                console.error('复制失败:', err);
+            });
+        }
+    </script>
     <script src="assets/js/theme.js"></script>
+    <script>
+        const searchInput = document.getElementById('global-search');
+        const resultsBox = document.getElementById('search-results-box');
 
+        // 1. 定义本地所有的静态页面
+        let searchableData = [
+            { title: "我的相册", type: "功能", url: "album.html", icon: "📸" },
+            { title: "3D 模型展示", type: "功能", url: "model.html", icon: "🧊" },
+            { title: "音乐播放器", type: "功能", url: "music.html", icon: "🎵" },
+            { title: "留言墙", type: "功能", url: "guestbook.html", icon: "💬" },
+            { title: "我的简历", type: "简历", url: "resume.html", icon: "📄" },
+            { title: "五子棋游戏", type: "游戏", url: "gomoku.html", icon: "⚫" }
+        ];
+
+        // 2. 网页加载时，去抓取 json 里的数据 (教程 + 音乐)
+        Promise.all([
+            fetch('data/tutorials.json').then(res => res.ok ? res.json() : []),
+            fetch('data/music.json').then(res => res.ok ? res.json() : [])
+        ]).then(([tutorials, music]) => {
+
+            // 把教程加进搜索库
+            tutorials.forEach(t => {
+                searchableData.push({
+                    title: t.title,
+                    type: "教程",
+                    url: t.link, // 教程直接跳外部链接
+                    icon: "📚",
+                    isExternal: true
+                });
+            });
+
+            // 把音乐加进搜索库
+            music.forEach(m => {
+                searchableData.push({
+                    title: m.title + " - " + m.artist,
+                    type: "音乐",
+                    url: "music.html", // 搜到音乐就去音乐页面
+                    icon: "🎧"
+                });
+            });
+
+            console.log("搜索库构建完成，共 " + searchableData.length + " 条数据");
+        });
+
+        // 3. 监听输入事件
+        searchInput.addEventListener('input', (e) => {
+            const keyword = e.target.value.toLowerCase().trim();
+            resultsBox.innerHTML = ''; // 清空旧结果
+
+            if (keyword.length === 0) {
+                resultsBox.style.display = 'none';
+                return;
+            }
+
+            // 过滤数据 (匹配标题)
+            const results = searchableData.filter(item =>
+                item.title.toLowerCase().includes(keyword)
+            );
+
+            // 显示结果
+            if (results.length > 0) {
+                resultsBox.style.display = 'block';
+                results.forEach(item => {
+                    const link = document.createElement('a');
+                    link.className = 'search-item';
+                    link.href = item.url;
+
+                    // 如果是外部链接，新标签页打开
+                    if (item.isExternal) link.target = "_blank";
+
+                    link.innerHTML = `
+                            <span class="type-icon">${item.icon}</span>
+                            <span class="item-title">${item.title}</span>
+                            <span class="item-sub">${item.type}</span>
+                        `;
+                    resultsBox.appendChild(link);
+                });
+            } else {
+                resultsBox.style.display = 'block';
+                resultsBox.innerHTML = `<div class="search-item" style="color:#999; justify-content:center;">暂无搜索结果</div>`;
+            }
+        });
+
+        // 4. 点击页面其他地方关闭搜索框
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-wrapper')) {
+                resultsBox.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 
 </html>

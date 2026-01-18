@@ -69,6 +69,7 @@ tutorials.json
     "link": "https://blog.csdn.net/你的收藏链接",
     "tag": "C语言",
     "icon": "💻"
+    "image": "assets/images/resource_preview.jpg"//可选
   },
   {
     "title": "ESP32 开发环境搭建 (VSCode + PlatformIO)",

@@ -65,7 +65,6 @@
             padding: 25px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
             text-decoration: none;
-            /* 去掉下划线 */
             color: inherit;
             transition: transform 0.3s, box-shadow 0.3s;
             border: 1px solid transparent;
@@ -75,14 +74,12 @@
             overflow: hidden;
         }
 
-        /* 悬停效果：上浮 + 阴影 */
         .resource-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
             border-color: #a18cd1;
         }
 
-        /* 卡片顶部的图标和标签 */
         .card-header {
             display: flex;
             justify-content: space-between;
@@ -115,17 +112,80 @@
             color: #666;
             line-height: 1.6;
             flex-grow: 1;
-            /* 让描述撑开空间 */
+            margin-bottom: 15px;
         }
 
         .link-hint {
-            margin-top: 15px;
+            margin-top: auto;
             font-size: 13px;
             color: #a18cd1;
             font-weight: bold;
             display: flex;
             align-items: center;
             gap: 5px;
+        }
+
+        /* === 新增：缩略图样式 === */
+        .card-thumbnail {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            /* 保证图片铺满不变形 */
+            border-radius: 8px;
+            margin-bottom: 15px;
+            cursor: zoom-in;
+            /* 鼠标放上去显示放大镜 */
+            border: 1px solid #eee;
+            transition: opacity 0.2s;
+        }
+
+        .card-thumbnail:hover {
+            opacity: 0.9;
+        }
+
+        /* === 新增：大图查看器 (Lightbox) === */
+        .lightbox {
+            display: none;
+            /* 默认隐藏 */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            /* 黑色半透明背景 */
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 80%;
+            border-radius: 5px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            animation: zoomIn 0.3s ease;
+        }
+
+        .lightbox-close {
+            margin-top: 20px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         /* === 黑夜模式适配 === */
@@ -166,6 +226,10 @@
         body.dark-mode p {
             color: #ccc !important;
         }
+
+        body.dark-mode .card-thumbnail {
+            border-color: #444;
+        }
     </style>
 </head>
 
@@ -180,10 +244,33 @@
     <div class="resource-grid" id="grid-box">
     </div>
 
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <img id="lightbox-img" src="" alt="大图">
+        <div class="lightbox-close">&times;</div>
+    </div>
+
     <script src="assets/js/theme.js"></script>
 
     <script>
         const gridBox = document.getElementById('grid-box');
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+
+        // 打开大图函数
+        function openLightbox(event, imgSrc) {
+            // 核心：阻止事件冒泡和默认行为（防止点击图片时跳转网页）
+            event.preventDefault();
+            event.stopPropagation();
+
+            // 显示大图
+            lightboxImg.src = imgSrc;
+            lightbox.style.display = "flex";
+        }
+
+        // 关闭大图函数
+        function closeLightbox() {
+            lightbox.style.display = "none";
+        }
 
         // 读取 data/tutorials.json
         fetch('data/tutorials.json')
@@ -196,14 +283,22 @@
                     link.href = item.link;
                     link.target = "_blank"; // 在新标签页打开
 
+                    // 1. 判断是否有图片，生成图片的 HTML
+                    let imageHtml = '';
+                    if (item.image && item.image.trim() !== "") {
+                        // 注意：onclick 调用了 openLightbox
+                        imageHtml = `<img src="${item.image}" class="card-thumbnail" onclick="openLightbox(event, '${item.image}')" alt="预览图">`;
+                    }
+
+                    // 2. 组装卡片内容
                     link.innerHTML = `
                         <div class="card-header">
                             <span class="icon">${item.icon}</span>
                             <span class="tag">${item.tag}</span>
                         </div>
-                        <div class="card-title">${item.title}</div>
+                        ${imageHtml} <div class="card-title">${item.title}</div>
                         <div class="card-desc">${item.desc}</div>
-                        <div class="link-hint">点击查看 ↗</div>
+                        <div class="link-hint">点击查看详情 ↗</div>
                     `;
                     gridBox.appendChild(link);
                 });
