@@ -93,3 +93,49 @@ tutorials.json
     "icon": "🧊"
   }
 ]
+
+music.json
+[
+  {
+    "title": "妈妈的话",
+    "artist": "DJ西双版纳",
+    "cover": "assets/images/photos/cover1.jpg",
+    "src": "assets/music/mamadehua.mp3",
+    "lrc": "assets/lyrics/mamadehua.lrc" 
+  },
+  {
+    "title": "夜空中最亮的星",
+    "artist": "逃跑计划",
+    "cover": "assets/images/photos/cover2.jpg",
+    "src": "assets/music/star.mp3",
+    "lrc": "assets/lyrics/star.lrc"
+  },
+  {
+    "title": "夜空中最亮的星",
+    "artist": "逃跑计划",
+    "cover": "assets/images/photos/cover2.jpg",
+    "src": "assets/music/star.mp3",
+    "lrc": "[00:00.00] 夜空中最亮的星..."
+  },
+  {
+    "title": "稻香",
+    "artist": "周杰伦",
+    "cover": "assets/images/photos/cover3.jpg",
+    "src": "assets/music/daoxiang.mp3",
+    "lrc": "[00:00.00] 对这个世界如果你有太多的抱怨..."
+  },
+  {
+    "title": "妈妈的话 (纯音乐)",
+    "artist": "DJ西双版纳",
+    "cover": "assets/images/photos/cover1.jpg",
+    "src": "assets/music/mamadehua.mp3",  
+    "lrc": "assets/lyrics/mamadehua.lrc"
+  },
+  {
+    "title": "示例 MV (视频)",
+    "artist": "我的乐队",
+    "cover": "assets/images/photos/mv_cover.jpg",
+    "src": "assets/music/my_video.mp4", //src会自动识别是视频还是音频
+    "lrc": "[00:00.00] 这是一个视频 MV..."
+  }
+]

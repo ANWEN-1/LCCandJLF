@@ -1,10 +1,17 @@
 [
   {
     "title": "妈妈的话",
+    "artist": "周杰伦",
+    "cover": "assets/images/music/听妈妈的话.png",
+    "src": "assets/music/MP4/听妈妈的话.mp4",
+    "lrc": "assets/lyrics/听妈妈的话.lrc"
+  },
+  {
+    "title": "妈妈的话",
     "artist": "DJ西双版纳",
-    "cover": "assets/images/photos/cover1.jpg",
-    "src": "assets/music/mamadehua.mp3",
-    "lrc": "[00:00.00] 暂无歌词..."
+    "cover": "assets/images/music/听妈妈的话.png",
+    "src": "assets/music/MP3/听妈妈的话.mp3",
+    "lrc": "assets/lyrics/听妈妈的话.lrc"
   },
   {
     "title": "夜空中最亮的星",

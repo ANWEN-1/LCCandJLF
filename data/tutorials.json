@@ -30,6 +30,22 @@
     "image": "assets/images/Tutorial_images/远程遥控器.png"
   },
   {
+    "title": "抖音无水印在线解析工具",
+    "desc": "支持解析视频和照片",
+    "link": "https://douyintool.com/",
+    "tag": "视频",
+    "icon": "📽️",
+    "image": "assets/images/Tutorial_images/解析示例.png"
+  },
+  {
+    "title": "ESP32开发板在线模拟仿真",
+    "desc": "从零开始搭建嵌入式开发环境，包含驱动安装和点灯测试。",
+    "link": "https://wokwi.com/",
+    "tag": "嵌入式",
+    "icon": "👨‍🔬",
+    "image": "assets/images/Tutorial_images/Wokwi.png"
+  },
+  {
     "title": "ESP32 开发环境搭建 (VSCode + PlatformIO)",
     "desc": "从零开始搭建嵌入式开发环境，包含驱动安装和点灯测试。",
     "link": "https://github.com/你的仓库/esp32-setup",
