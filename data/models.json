@@ -1,9 +1,39 @@
 [
     {
+        "src": "assets/models/圣诞节的蜘蛛侠.glb",
+        "name": "圣诞节的蜘蛛侠",
+        "desc": "模型",
+        "speed": "50deg"
+    },
+    {
+        "src": "assets/models/小雪人.glb",
+        "name": "小雪人",
+        "desc": "模型",
+        "speed": "50deg"
+    },
+    {
+        "src": "assets/models/KamadoNezuko.glb",
+        "name": "灶门祢豆子（Kamado Nezuko）",
+        "desc": "角色模型",
+        "speed": "50deg"
+    },
+    {
+        "src": "assets/models/房子3D模型.glb",
+        "name": "扫描的模型",
+        "desc": "3D模型",
+        "speed": "50deg"
+    },
+    {
         "src": "assets/models/part.glb",
         "name": "电脑烧烤架零件",
         "desc": "用来增高的",
         "speed": "100deg"
+    },
+    {
+        "src": "assets/models/Colosseum3dModel.glb",
+        "name": "古罗马斗兽场",
+        "desc": "3D模型",
+        "speed": "50deg"
     },
     {
         "src": "assets/models/chopsticks.glb",

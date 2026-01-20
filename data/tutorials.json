@@ -46,6 +46,13 @@
     "image": "assets/images/Tutorial_images/Wokwi.png"
   },
   {
+    "title": "12306加速抢票过程",
+    "desc": "加速抢票，定时抢票。如果没票是抢不到的。",
+    "link": "https://www.bypass.cn/",
+    "tag": "12306",
+    "icon": "🚅"
+  },
+  {
     "title": "ESP32 开发环境搭建 (VSCode + PlatformIO)",
     "desc": "从零开始搭建嵌入式开发环境，包含驱动安装和点灯测试。",
     "link": "https://github.com/你的仓库/esp32-setup",
