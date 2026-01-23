@@ -1,14 +1,14 @@
 [
   {
-    "filename": "1.jpg",
+    "filename": "assets/images/photos/1.jpg",
     "desc": "第一次去海边看日出，太美了！"
   },
   {
-    "filename": "2.jpg",
+    "filename": "assets/images/photos/2.jpg",
     "desc": "去景区拍美美的照片"
   },
   {
-    "filename": "3.jpg",
+    "filename": "assets/images/photos/5.jpg",
     "desc": "一起去吃了火锅"
   }
 ]
