@@ -25,11 +25,11 @@
             background-color: #1a2340;
         }
 
-        /* === 祝福卡片样式 (对应 Python 中的窗口) === */
+        /* === 祝福卡片样式 (文字和照片通用) === */
         .wish-card {
             position: absolute;
             width: 250px;
-            /* 对应 Python window_width */
+            /* 默认宽度 */
             padding: 15px;
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -42,8 +42,23 @@
             opacity: 0;
             transform: scale(0.5);
             animation: popIn 0.5s forwards;
-            /* 弹出动画 */
             z-index: 10;
+
+            /* 让内容垂直居中 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 照片卡片里的图片样式 */
+        .wish-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+            display: block;
+            pointer-events: none;
+            /* 防止图片被拖拽 */
         }
 
         /* 动画效果：从小变大弹出 */
@@ -54,7 +69,7 @@
             }
         }
 
-        /* === 退出按钮样式 (对应 Python 右下角按钮) === */
+        /* === 退出按钮样式 === */
         .exit-btn {
             position: fixed;
             bottom: 80px;
@@ -62,7 +77,6 @@
             width: 120px;
             height: 40px;
             background-color: #F08080;
-            /* lightcoral */
             color: white;
             border: none;
             border-radius: 20px;
@@ -79,7 +93,7 @@
             background-color: #e66b6b;
         }
 
-        /* === 1. 昼夜切换开关样式 (保持统一) === */
+        /* === 昼夜开关样式 (保持不变) === */
         .toggle-wrapper {
             position: fixed;
             top: 20px;
@@ -314,13 +328,21 @@
     <script src="assets/js/theme.js"></script>
 
     <script>
-        // === 1. 数据准备 (来自 hhh1.py) ===
+        // === 1. 数据准备 (祝福语) ===
         const tips = [
             '祝我好闺闺没灾没病', '金榜题名', '祝你每天都感到幸福',
             '好心情向你靠近坏心情远离', '保持好心情', '好好爱自己', '祝我好闺闺23岁生日快乐',
             '祝你所想皆所成', '期待下一次见面', '祝你一次考研上岸',
-            '有事不要自己一个人扛', '牙痛早点好', '愿所有烦恼都消失',
+            '有事不要自己一个人扛', '结婚结婚', '愿所有烦恼都消失',
             '要好好爱自己', '今天过得开心嘛', '祝我好闺闺发财暴富', '每天开开心心'
+        ];
+
+        // === 2. 照片列表 (请在这里修改你的照片路径) ===
+        // 注意：如果你只有3张照片，就只填3个；路径要对，不然会自动变成文字卡片
+        const photos = [
+            "assets/images/photos/1.jpg",
+            "assets/images/photos/2.jpg",
+            "assets/images/photos/5.jpg"
         ];
 
         const bgColors = [
@@ -334,21 +356,46 @@
 
         const container = document.getElementById('wishes-container');
         let count = 0;
-        const maxWishes = 200; // 网页版限制一下数量，防止浏览器太卡，100个已经铺满屏幕了
+        const maxWishes = 200; // 最大数量
 
-        // === 2. 创建随机祝福卡片函数 ===
+        // === 3. 创建随机卡片函数 (文字/照片混合) ===
         function createWish() {
             if (count >= maxWishes) return;
 
             const div = document.createElement('div');
             div.className = 'wish-card';
 
-            // 随机内容和背景
-            div.innerText = tips[Math.floor(Math.random() * tips.length)];
-            div.style.backgroundColor = bgColors[Math.floor(Math.random() * bgColors.length)];
+            // 🎲 30% 的概率显示照片 (前提是照片列表里有东西)
+            const showPhoto = photos.length > 0 && Math.random() < 0.3;
 
-            // 随机位置 (减去卡片宽高，防止超出屏幕)
-            const maxX = window.innerWidth - 280; // 250宽 + padding
+            if (showPhoto) {
+                // === 照片模式 ===
+                const imgPath = photos[Math.floor(Math.random() * photos.length)];
+
+                // 设置成“拍立得”风格：白底，留一点边距
+                div.style.backgroundColor = "#fff";
+                div.style.padding = "5px";
+                div.style.boxShadow = "0 8px 20px rgba(0,0,0,0.3)"; // 照片阴影稍微重一点
+
+                const img = document.createElement('img');
+                img.src = imgPath;
+
+                // 错误处理：万一图片路径写错了，加载失败时变回文字卡片
+                img.onerror = function () {
+                    console.log("图片加载失败，切换回文字:", imgPath);
+                    div.innerHTML = ""; // 清除坏图
+                    setupTextCard(div); // 变身文字卡
+                };
+
+                div.appendChild(img);
+
+            } else {
+                // === 文字模式 ===
+                setupTextCard(div);
+            }
+
+            // === 通用：随机位置和旋转 ===
+            const maxX = window.innerWidth - 280;
             const maxY = window.innerHeight - 80;
             const x = Math.random() * maxX;
             const y = Math.random() * maxY;
@@ -356,33 +403,37 @@
             div.style.left = x + 'px';
             div.style.top = y + 'px';
 
-            // 随机旋转一点角度，更自然
-            const rotate = (Math.random() - 0.5) * 20; // -10 到 10 度
+            const rotate = (Math.random() - 0.5) * 30; // 旋转角度稍微大一点 (-15 ~ 15度)
             div.style.transform = `rotate(${rotate}deg) scale(0.5)`;
 
             container.appendChild(div);
             count++;
 
-            // 简单的入场动画修正
+            // 进场动画修正
             setTimeout(() => {
                 div.style.transform = `rotate(${rotate}deg) scale(1)`;
                 div.style.opacity = 1;
             }, 50);
         }
 
-        // === 3. 启动循环生成 ===
-        // 对应 Python 中的 time.sleep(0.005) 快速生成
+        // 辅助函数：生成文字卡片内容
+        function setupTextCard(div) {
+            div.innerText = tips[Math.floor(Math.random() * tips.length)];
+            div.style.backgroundColor = bgColors[Math.floor(Math.random() * bgColors.length)];
+            div.style.padding = "15px"; // 恢复文字的内边距
+            div.style.color = "#333";
+        }
+
+        // === 4. 启动循环生成 ===
         let interval = setInterval(() => {
             createWish();
             if (count >= maxWishes) clearInterval(interval);
-        }, 50); // 每50毫秒生成一个
+        }, 50); // 每50毫秒弹一个
 
-        // === 4. 退出逻辑 ===
+        // === 5. 退出逻辑 ===
         function exitPage() {
-            // 清空所有卡片
             container.innerHTML = '';
             count = 0;
-            // 跳转回主页
             window.location.href = "index.html";
         }
     </script>

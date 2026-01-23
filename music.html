@@ -410,9 +410,6 @@
 
         /* 专辑封面 (MP3模式) - 自适应版 */
         .album-art {
-            /* 1. 删掉固定的 450px 宽高 */
-            /* width: 450px; height: 450px; */
-
             /* 2. 设定最大限制 (防止图片太大盖住歌词) */
             max-width: 450px;
             max-height: 450px;
@@ -435,11 +432,8 @@
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
         }
 
-        /* 视频播放器 (MV模式) - 默认隐藏 */
         /* 视频播放器 (MV模式) - 自适应版 */
         .video-player {
-            /* 1. 删掉固定的 width: 450px; height: 450px; */
-
             /* 2. 改为限制最大宽高，防止视频太大撑破页面 */
             max-width: 450px;
             max-height: 450px;
@@ -728,7 +722,8 @@
 
             // 自动播放
             if (playBtn.innerText === "⏸") {
-                currentPlayer.play();
+                // 尝试播放，如果有错误会被外面的 error handler 捕获
+                currentPlayer.play().catch(e => console.log("等待交互...", e));
                 document.getElementById('player-container').classList.add('playing');
             } else {
                 // 重置按钮状态
@@ -781,7 +776,8 @@
             loadSong(newIndex);
             // 确保切歌后按钮变为暂停状态（表示正在播放）
             playBtn.innerText = "⏸";
-            currentPlayer.play();
+            // 播放，如果失败会触发 error
+            currentPlayer.play().catch(e => { });
         }
 
         function prevSong() {
@@ -794,7 +790,7 @@
             }
             loadSong(newIndex);
             playBtn.innerText = "⏸";
-            currentPlayer.play();
+            currentPlayer.play().catch(e => { });
         }
 
         // === 统一的事件处理函数 ===
@@ -834,7 +830,25 @@
                 nextSong();
             }
         }
-        // === 新增：视频自适应逻辑 ===
+
+        // === 新增：处理资源加载失败（文件不存在自动跳过） ===
+        function handleError(e) {
+            // 只处理当前播放器的错误
+            if (e.target !== currentPlayer) return;
+
+            console.log(`资源加载失败: ${songs[currentIndex].title}，尝试跳过...`);
+
+            // 显示提示
+            showToast(`❌ 无法播放: ${songs[currentIndex].title} (自动跳过)`);
+
+            // 稍微延迟一下再切歌，防止因为列表全挂了导致浏览器卡死
+            setTimeout(() => {
+                // 无论什么模式，遇到错误都强制切到下一首
+                nextSong();
+            }, 1000);
+        }
+
+        // === 视频自适应逻辑 ===
         videoEl.addEventListener('loadedmetadata', function () {
             // 1. 获取视频真实的宽高
             const vW = this.videoWidth;
@@ -844,7 +858,6 @@
             const maxLimit = 450;
 
             // 3. 计算缩放比例 (Contain 算法)
-            // 意思是：算出宽缩小多少倍能塞进去，高缩小多少倍能塞进去，取那个缩小最厉害的倍数
             const scale = Math.min(maxLimit / vW, maxLimit / vH);
 
             // 4. 算出最终显示的宽高
@@ -860,10 +873,12 @@
                 this.style.display = 'block';
             }
         });
+
         // 给两个播放器都绑定事件
         [audioEl, videoEl].forEach(player => {
             player.addEventListener('timeupdate', handleTimeUpdate);
             player.addEventListener('ended', handleEnded);
+            player.addEventListener('error', handleError); // <--- 核心修改：绑定错误监听
         });
 
         // 进度条拖拽
@@ -895,7 +910,8 @@
                     li.onclick = () => {
                         loadSong(i);
                         playBtn.innerText = "⏸";
-                        currentPlayer.play();
+                        // 这里尝试播放，如果有错误会触发 error 事件
+                        currentPlayer.play().catch(e => { });
                     };
                     playlistBox.appendChild(li);
                 }
