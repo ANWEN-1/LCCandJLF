@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的随身听</title>
     <style>
-        /* === 1. 昼夜切换开关样式 (保持不变) === */
+        /* === 1. 昼夜切换开关样式 === */
         .toggle-wrapper {
             position: fixed;
             top: 30px;
@@ -339,28 +339,62 @@
             max-width: 500px;
         }
 
+        /* === 进度条美化修改部分 (新版圆角) === */
         .progress-area {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 12px;
+            gap: 15px;
+            font-size: 13px;
+            font-family: 'Consolas', monospace;
         }
 
         input[type=range] {
             flex: 1;
             -webkit-appearance: none;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 2px;
+            height: 20px;
+            /* 热区高度 */
+            background: transparent;
             cursor: pointer;
+            outline: none;
+            /* 初始化进度变量 */
+            --progress: 0%;
         }
 
+        /* 轨道 - Webkit */
+        input[type=range]::-webkit-slider-runnable-track {
+            height: 8px;
+            /* 稍微加粗一点轨道，视觉更饱满 */
+            border-radius: 10px;
+            /* 【核心】：这里定义了圆角 */
+
+            /* 【核心】：将渐变背景移到这里，并使用 CSS 变量 */
+            background: linear-gradient(to right, #ffffff var(--progress), rgba(255, 255, 255, 0.15) var(--progress));
+
+            transition: all 0.3s;
+        }
+
+        /* 滑块 - Webkit */
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 12px;
-            height: 12px;
-            background: white;
+            height: 16px;
+            width: 16px;
             border-radius: 50%;
+            background: #fff;
+            /* 计算偏移量让滑块垂直居中: (轨道高度8px - 滑块高度16px) / 2 = -4px */
+            margin-top: -4px;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+            transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* 悬停效果 */
+        input[type=range]:hover::-webkit-slider-thumb {
+            transform: scale(1.3);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+        }
+
+        input[type=range]:active::-webkit-slider-thumb {
+            transform: scale(1.1);
+            background: #00e0ff;
         }
 
         .buttons {
@@ -399,7 +433,6 @@
             opacity: 0.8;
         }
 
-        /* === 右侧封面 & 视频容器 === */
         .cover-side {
             flex: 1;
             display: flex;
@@ -408,19 +441,12 @@
             position: relative;
         }
 
-        /* 专辑封面 (MP3模式) - 自适应版 */
         .album-art {
-            /* 2. 设定最大限制 (防止图片太大盖住歌词) */
             max-width: 450px;
             max-height: 450px;
-
-            /* 3. 让宽高自动根据图片原本的比例缩放 */
             width: auto;
             height: auto;
-
-            /* 4. 保持图片完整，不裁剪 */
             object-fit: contain;
-
             border-radius: 20px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
             transition: transform 0.5s;
@@ -432,22 +458,14 @@
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
         }
 
-        /* 视频播放器 (MV模式) - 自适应版 */
         .video-player {
-            /* 2. 改为限制最大宽高，防止视频太大撑破页面 */
             max-width: 450px;
             max-height: 450px;
-
-            /* 3. 让宽高自动适应内容 */
             width: auto;
             height: auto;
-
             border-radius: 20px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-
-            /* 4. 去掉黑色背景，改为透明 */
             background: transparent;
-
             display: none;
             z-index: 3;
         }
@@ -636,8 +654,7 @@
         <div class="playlist-search">
             <input type="text" id="playlist-search-input" placeholder="🔍 搜索歌名或歌手...">
         </div>
-        <ul class="playlist-items" id="playlist-box">
-        </ul>
+        <ul class="playlist-items" id="playlist-box"></ul>
     </div>
 
     <audio id="audio-player"></audio>
@@ -645,11 +662,9 @@
     <script src="assets/js/theme.js"></script>
 
     <script>
-        // 获取所有核心元素
         const audioEl = document.getElementById('audio-player');
         const videoEl = document.getElementById('video-player');
         const imgEl = document.getElementById('album-art');
-
         const playBtn = document.getElementById('play-btn');
         const progressBar = document.getElementById('progress-bar');
         const bgLayer = document.getElementById('bg-layer');
@@ -658,15 +673,11 @@
 
         let playMode = 'loop';
         const modeBtn = document.getElementById('mode-btn');
-
         let songs = [];
         let currentIndex = 0;
         let lyricsData = [];
-
-        // 关键变量：当前正在使用的播放器（audioEl 或 videoEl）
         let currentPlayer = audioEl;
 
-        // 1. 初始化
         fetch('data/music.json')
             .then(res => res.json())
             .then(data => {
@@ -676,69 +687,47 @@
                 loadSong(0);
             });
 
-        // 2. 加载歌曲函数
         function loadSong(index) {
-            // 先暂停并重置两个播放器，防止声音重叠
             audioEl.pause();
             videoEl.pause();
-
             currentIndex = index;
             const song = songs[index];
 
             document.getElementById('song-title').innerText = song.title;
             document.getElementById('song-artist').innerText = song.artist;
-
-            // 背景图始终用封面
             bgLayer.style.backgroundImage = `url(${song.cover})`;
 
-            // === 核心逻辑：判断是 MP3 还是 MP4 ===
             const isVideo = song.src.toLowerCase().endsWith('.mp4') || song.src.toLowerCase().endsWith('.webm');
 
             if (isVideo) {
-                // 切换到视频模式
                 currentPlayer = videoEl;
-                imgEl.style.display = 'none';   // 隐藏封面
-                videoEl.style.display = 'block'; // 显示视频
+                imgEl.style.display = 'none';
+                videoEl.style.display = 'block';
                 videoEl.src = song.src;
             } else {
-                // 切换到音频模式
                 currentPlayer = audioEl;
-                videoEl.style.display = 'none'; // 隐藏视频
-                imgEl.style.display = 'block';  // 显示封面
+                videoEl.style.display = 'none';
+                imgEl.style.display = 'block';
                 imgEl.src = song.cover;
                 audioEl.src = song.src;
             }
 
-            // 加载歌词 (通用逻辑)
             loadLyrics(song.lrc);
+            renderPlaylist(document.getElementById('playlist-search-input')?.value || "");
 
-            // 更新播放列表高亮
-            const searchInput = document.getElementById('playlist-search-input');
-            if (searchInput) {
-                renderPlaylist(searchInput.value);
-            } else {
-                renderPlaylist();
-            }
-
-            // 自动播放
             if (playBtn.innerText === "⏸") {
-                // 尝试播放，如果有错误会被外面的 error handler 捕获
                 currentPlayer.play().catch(e => console.log("等待交互...", e));
                 document.getElementById('player-container').classList.add('playing');
             } else {
-                // 重置按钮状态
                 playBtn.innerText = "▶";
                 document.getElementById('player-container').classList.remove('playing');
             }
         }
 
-        // 辅助：加载歌词
         function loadLyrics(lrcSource) {
             lyricsData = [];
             lyricLine.innerText = "纯音乐 / 暂无歌词";
-
             if (!lrcSource) return;
-
             if (lrcSource.endsWith('.lrc')) {
                 lyricLine.innerText = "正在加载歌词...";
                 fetch(lrcSource)
@@ -750,7 +739,6 @@
             }
         }
 
-        // 3. 播放控制 (控制 currentPlayer)
         function togglePlay() {
             if (currentPlayer.paused) {
                 currentPlayer.play();
@@ -764,42 +752,27 @@
         }
         playBtn.addEventListener('click', togglePlay);
 
-        // 下一首/上一首
         function nextSong() {
-            let newIndex;
-            if (playMode === 'random') {
-                newIndex = Math.floor(Math.random() * songs.length);
-            } else {
-                newIndex = currentIndex + 1;
-                if (newIndex >= songs.length) newIndex = 0;
-            }
+            let newIndex = (playMode === 'random') ? Math.floor(Math.random() * songs.length) : (currentIndex + 1) % songs.length;
             loadSong(newIndex);
-            // 确保切歌后按钮变为暂停状态（表示正在播放）
             playBtn.innerText = "⏸";
-            // 播放，如果失败会触发 error
             currentPlayer.play().catch(e => { });
         }
 
         function prevSong() {
-            let newIndex;
-            if (playMode === 'random') {
-                newIndex = Math.floor(Math.random() * songs.length);
-            } else {
-                newIndex = currentIndex - 1;
-                if (newIndex < 0) newIndex = songs.length - 1;
-            }
+            let newIndex = (playMode === 'random') ? Math.floor(Math.random() * songs.length) : (currentIndex - 1 + songs.length) % songs.length;
             loadSong(newIndex);
             playBtn.innerText = "⏸";
             currentPlayer.play().catch(e => { });
         }
 
-        // === 统一的事件处理函数 ===
+        // === 进度条逻辑更新：增加动态背景效果 ===
         function handleTimeUpdate(e) {
-            // 只响应当前播放器的事件
             if (e.target !== currentPlayer) return;
 
             const percent = (currentPlayer.currentTime / currentPlayer.duration) * 100 || 0;
             progressBar.value = percent;
+            progressBar.style.setProperty('--progress', `${percent}%`);
             document.getElementById('curr-time').innerText = formatTime(currentPlayer.currentTime);
             document.getElementById('total-time').innerText = formatTime(currentPlayer.duration || 0);
 
@@ -814,144 +787,57 @@
 
         function handleEnded(e) {
             if (e.target !== currentPlayer) return;
-
             if (playMode === 'single') {
                 currentPlayer.currentTime = 0;
-                currentPlayer.play();
-            } else if (playMode === 'random') {
-                let randomIndex = Math.floor(Math.random() * songs.length);
-                while (randomIndex === currentIndex && songs.length > 1) {
-                    randomIndex = Math.floor(Math.random() * songs.length);
-                }
-                loadSong(randomIndex);
-                playBtn.innerText = "⏸";
                 currentPlayer.play();
             } else {
                 nextSong();
             }
         }
 
-        // === 新增：处理资源加载失败（文件不存在自动跳过） ===
         function handleError(e) {
-            // 只处理当前播放器的错误
             if (e.target !== currentPlayer) return;
-
-            console.log(`资源加载失败: ${songs[currentIndex].title}，尝试跳过...`);
-
-            // 显示提示
             showToast(`❌ 无法播放: ${songs[currentIndex].title} (自动跳过)`);
-
-            // 稍微延迟一下再切歌，防止因为列表全挂了导致浏览器卡死
-            setTimeout(() => {
-                // 无论什么模式，遇到错误都强制切到下一首
-                nextSong();
-            }, 1000);
+            setTimeout(nextSong, 1000);
         }
 
-        // === 视频自适应逻辑 ===
         videoEl.addEventListener('loadedmetadata', function () {
-            // 1. 获取视频真实的宽高
-            const vW = this.videoWidth;
-            const vH = this.videoHeight;
-
-            // 2. 设定最大限制 (和 CSS 里的 max-width 保持一致)
-            const maxLimit = 450;
-
-            // 3. 计算缩放比例 (Contain 算法)
+            const vW = this.videoWidth, vH = this.videoHeight, maxLimit = 450;
             const scale = Math.min(maxLimit / vW, maxLimit / vH);
-
-            // 4. 算出最终显示的宽高
-            const finalWidth = vW * scale;
-            const finalHeight = vH * scale;
-
-            // 5. 应用给视频元素
-            this.style.width = finalWidth + "px";
-            this.style.height = finalHeight + "px";
-
-            // 6. 顺便显示出来 (防止闪烁)
-            if (currentPlayer === videoEl) {
-                this.style.display = 'block';
-            }
+            this.style.width = (vW * scale) + "px";
+            this.style.height = (vH * scale) + "px";
+            if (currentPlayer === videoEl) this.style.display = 'block';
         });
 
-        // 给两个播放器都绑定事件
         [audioEl, videoEl].forEach(player => {
             player.addEventListener('timeupdate', handleTimeUpdate);
             player.addEventListener('ended', handleEnded);
-            player.addEventListener('error', handleError); // <--- 核心修改：绑定错误监听
+            player.addEventListener('error', handleError);
         });
 
-        // 进度条拖拽
         progressBar.addEventListener('input', (e) => {
             const time = (e.target.value / 100) * currentPlayer.duration;
             currentPlayer.currentTime = time;
         });
 
-        // 5. 播放列表逻辑 (和之前一样)
         function renderPlaylist(keyword = "") {
             playlistBox.innerHTML = '';
-            let matchCount = 0;
-
             songs.forEach((song, i) => {
-                const matchTitle = song.title.toLowerCase().includes(keyword.toLowerCase());
-                const matchArtist = song.artist.toLowerCase().includes(keyword.toLowerCase());
-
-                if (matchTitle || matchArtist || keyword === "") {
-                    matchCount++;
+                if (song.title.toLowerCase().includes(keyword.toLowerCase()) || song.artist.toLowerCase().includes(keyword.toLowerCase()) || keyword === "") {
                     const li = document.createElement('li');
-                    // 增加一个小图标区分视频
                     const icon = (song.src.endsWith('.mp4')) ? "🎬 " : "";
-
-                    li.innerHTML = `
-                        <div><span class="song-idx">${i + 1}</span> ${icon}${song.title}</div>
-                        <span style="font-size:12px; opacity:0.6">${song.artist}</span>
-                    `;
+                    li.innerHTML = `<div><span class="song-idx">${i + 1}</span> ${icon}${song.title}</div><span style="font-size:12px; opacity:0.6">${song.artist}</span>`;
                     if (i === currentIndex) li.classList.add('active');
-                    li.onclick = () => {
-                        loadSong(i);
-                        playBtn.innerText = "⏸";
-                        // 这里尝试播放，如果有错误会触发 error 事件
-                        currentPlayer.play().catch(e => { });
-                    };
+                    li.onclick = () => { loadSong(i); playBtn.innerText = "⏸"; currentPlayer.play().catch(e => { }); };
                     playlistBox.appendChild(li);
                 }
             });
-
-            if (matchCount === 0) {
-                const li = document.createElement('li');
-                li.style.flexDirection = "column";
-                li.style.justifyContent = "center";
-                li.style.textAlign = "center";
-                li.style.background = "rgba(255,255,255,0.05)";
-                li.style.padding = "20px";
-                li.style.cursor = "default";
-                const targetUrl = "https://www.myfreemp3.com.cn/";
-                li.innerHTML = `
-                    <div style="font-size:14px; opacity:0.7; margin-bottom:10px;">
-                        😕 没找到 "${keyword}"
-                    </div>
-                    <a href="${targetUrl}" target="_blank" 
-                       style="color:#00e0ff; text-decoration:none; font-size:13px; border:1px solid #00e0ff; padding:8px 20px; border-radius:20px; display:inline-block; margin-bottom:10px; font-weight:bold;">
-                       去 MyFreeMP3 找歌 📥
-                    </a>
-                `;
-                playlistBox.appendChild(li);
-            }
         }
 
-        document.getElementById('playlist-search-input').addEventListener('input', (e) => {
-            renderPlaylist(e.target.value);
-        });
+        document.getElementById('playlist-search-input').addEventListener('input', (e) => renderPlaylist(e.target.value));
+        function togglePlaylist() { document.getElementById('playlist-drawer').classList.toggle('open'); }
+        function formatTime(s) { let m = Math.floor(s / 60); s = Math.floor(s % 60); return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s); }
 
-        function togglePlaylist() {
-            document.getElementById('playlist-drawer').classList.toggle('open');
-        }
-
-        function formatTime(s) {
-            let m = Math.floor(s / 60);
-            s = Math.floor(s % 60);
-            return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
-        }
         function parseLyrics(lrc) {
             const lines = lrc.split('\n');
             lyricsData = [];
@@ -967,40 +853,17 @@
         }
 
         function toggleMode() {
-            if (playMode === 'loop') {
-                playMode = 'single';
-                modeBtn.innerText = '🔂';
-                showToast("模式：单曲循环");
-            } else if (playMode === 'single') {
-                playMode = 'random';
-                modeBtn.innerText = '🔀';
-                showToast("模式：随机播放");
-            } else {
-                playMode = 'loop';
-                modeBtn.innerText = '🔁';
-                showToast("模式：列表循环");
-            }
+            if (playMode === 'loop') { playMode = 'single'; modeBtn.innerText = '🔂'; showToast("模式：单曲循环"); }
+            else if (playMode === 'single') { playMode = 'random'; modeBtn.innerText = '🔀'; showToast("模式：随机播放"); }
+            else { playMode = 'loop'; modeBtn.innerText = '🔁'; showToast("模式：列表循环"); }
         }
 
         function showToast(text) {
             const toast = document.createElement('div');
             toast.innerText = text;
-            toast.style.position = 'fixed';
-            toast.style.bottom = '100px';
-            toast.style.left = '50%';
-            toast.style.transform = 'translateX(-50%)';
-            toast.style.background = 'rgba(0,0,0,0.7)';
-            toast.style.color = 'white';
-            toast.style.padding = '10px 20px';
-            toast.style.borderRadius = '20px';
-            toast.style.zIndex = '200';
-            toast.style.transition = 'opacity 0.5s';
+            toast.style = "position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.7); color:white; padding:10px 20px; border-radius:20px; z-index:200; transition:opacity 0.5s;";
             document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => document.body.removeChild(toast), 500);
-            }, 1500);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => document.body.removeChild(toast), 500); }, 1500);
         }
     </script>
 </body>

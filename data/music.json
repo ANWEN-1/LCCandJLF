@@ -23,8 +23,20 @@
   {
     "title": "稻香",
     "artist": "周杰伦",
-    "cover": "assets/images/photos/cover3.jpg",
-    "src": "assets/music/daoxiang.mp3",
+    "cover": "assets/images/music/daoxiang.png",
+    "src": "assets/music/MP3/周杰伦-稻香.mp3",
     "lrc": "[00:00.00] 对这个世界如果你有太多的抱怨..."
+  },
+  {
+    "title": "泡沫",
+    "artist": "邓紫棋",
+    "cover": "assets/images/music/邓紫棋.png",
+    "src": "assets/music/MP4/泡沫.mp4"
+  },
+  {
+    "title": "雷霆版泡沫",
+    "artist": "AI",
+    "cover": "assets/images/music/雷霆版泡沫.png",
+    "src": "assets/music/MP4/雷霆版泡沫.mp4"
   }
 ]
