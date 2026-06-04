@@ -5,7 +5,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的个人主页</title>
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles-preset-bubbles@2/tsparticles.preset.bubbles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
+
     <style>
+        /* === 粒子背景容器 === */
+        #tsparticles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            /* 放在最底层 */
+            pointer-events: auto;
+            /* 允许鼠标交互 */
+        }
+
+        /* === 保证卡片、按钮等在粒子上方，并且能被点击 === */
+        .card,
+        footer,
+        .toggle-wrapper,
+        .click-emoji {
+            position: relative;
+            z-index: 10;
+        }
+
         /* === 搜索框容器 === */
         .search-wrapper {
             position: relative;
@@ -13,7 +38,6 @@
             max-width: 320px;
             margin: 20px 0;
             z-index: 100;
-            /* 保证弹出的菜单盖在下面按钮之上 */
         }
 
         /* 输入框本体 */
@@ -21,18 +45,17 @@
             width: 100%;
             padding: 12px 20px;
             padding-left: 45px;
-            /* 给左边的图标留位置 */
             border-radius: 30px;
             border: 2px solid #e0e0e0;
-            background: #fff;
+            background: rgba(255, 255, 255, 0.9);
+            /* 稍微变透明一点，透出后面的粒子 */
+            backdrop-filter: blur(5px);
             font-size: 15px;
             outline: none;
             transition: all 0.3s;
             box-sizing: border-box;
-            /* 防止宽度溢出 */
         }
 
-        /* 搜索小图标 */
         .search-icon {
             position: absolute;
             left: 15px;
@@ -40,9 +63,13 @@
             transform: translateY(-50%);
             color: #999;
             font-size: 16px;
+            /* === 下面这两行是关键 === */
+            z-index: 10;
+            /* 让图标强行浮在毛玻璃输入框的上方 */
+            pointer-events: none;
+            /* 让鼠标点击能直接“穿透”图标点到输入框里 */
         }
 
-        /* 输入框激活状态 */
         .search-input:focus {
             border-color: #87CEEB;
             box-shadow: 0 0 10px rgba(135, 206, 235, 0.3);
@@ -52,22 +79,19 @@
         .search-results {
             position: absolute;
             top: 50px;
-            /* 在输入框下面 */
             left: 0;
             width: 100%;
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
             max-height: 300px;
             overflow-y: auto;
-            /* 内容多了可以滚动 */
             display: none;
-            /* 默认隐藏 */
             text-align: left;
             overflow: hidden;
         }
 
-        /* 每一条搜索结果 */
         .search-item {
             padding: 12px 15px;
             border-bottom: 1px solid #f0f0f0;
@@ -83,7 +107,6 @@
         .search-item:hover {
             background: #f9f9f9;
             padding-left: 20px;
-            /* 悬停时稍微右移 */
         }
 
         .search-item:last-child {
@@ -105,15 +128,15 @@
             margin-left: auto;
         }
 
-        /* 黑夜模式适配 */
+        /* 黑夜模式搜索框适配 */
         body.dark-mode .search-input {
-            background: #2b324d;
+            background: rgba(43, 50, 77, 0.85);
             border-color: #444;
             color: white;
         }
 
         body.dark-mode .search-results {
-            background: #2b324d;
+            background: rgba(43, 50, 77, 0.95);
             border: 1px solid #444;
         }
 
@@ -141,42 +164,34 @@
 
         /* === 2. 你的个人介绍卡片样式 === */
         .card {
-            background: white;
+            background: rgba(255, 255, 255, 0.85);
+            /* 半透明，让背景粒子透出来 */
+            backdrop-filter: blur(10px);
+            /* 毛玻璃特效 */
             padding: 40px;
             border-radius: 15px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             text-align: center;
             max-width: 400px;
             transition: all 0.5s ease;
-            /* 让卡片内容垂直排列 */
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        /* --- 新增：图片（头像）样式 --- */
         .avatar {
             width: 120px;
-            /* 宽度 */
             height: 120px;
-            /* 高度 */
             border-radius: 50%;
-            /* 50% 就是正圆形 */
             object-fit: cover;
-            /* 防止图片变形 */
             margin-bottom: 20px;
-            /* 图片和标题的距离 */
             border: 4px solid white;
-            /* 图片白边 */
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            /* 图片阴影 */
             transition: transform 0.3s ease;
-            /* 鼠标放上去的动画 */
         }
 
         .avatar:hover {
             transform: scale(1.1);
-            /* 鼠标悬停放大一点点 */
         }
 
         h1 {
@@ -200,10 +215,8 @@
             right: 20px;
             transform: scale(0.4);
             transform-origin: top right;
-            z-index: 1000;
         }
 
-        /* === 4. 开关画图样式 (不变) === */
         .toggle-checkbox {
             display: none;
         }
@@ -281,11 +294,8 @@
         }
 
         /* === 黑夜模式专用样式 === */
-        /* 当 body 带有 dark-mode 类名时，下面的样式生效 */
-        /* 黑夜模式下，给按钮加一点边框，防止太暗看不清 */
         body.dark-mode .btn {
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            /* 更深的阴影 */
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
@@ -293,26 +303,19 @@
             background-color: #1a2340 !important;
         }
 
-        /* 让卡片变黑 */
         body.dark-mode .card {
-            background-color: #2b324d !important;
+            background-color: rgba(43, 50, 77, 0.85) !important;
+            /* 同样加入半透明毛玻璃 */
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
         }
 
-        /* 让标题变白 */
         body.dark-mode h1,
         body.dark-mode #my-title {
             color: #fff !important;
         }
 
-        /* 让段落文字变灰白 */
         body.dark-mode p {
             color: #ccc !important;
-        }
-
-        /* 适配你的 3D 和相册按钮，让它们在黑夜里更显眼一点（可选） */
-        body.dark-mode .btn {
-            box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1);
         }
 
         .star {
@@ -434,28 +437,21 @@
         }
 
         /* === 新增：主页按钮样式 === */
-        /* === 仪表盘按钮容器 === */
         .action-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            /* 一行两个，平分宽度 */
             gap: 15px;
-            /* 按钮之间的间距 */
             width: 100%;
-            /* 占满卡片宽度 */
             margin-top: 30px;
         }
 
-        /* === 按钮通用样式 === */
         .btn {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            /* 图标和文字的距离 */
             padding: 12px 15px;
             border-radius: 12px;
-            /* 圆角稍微小一点，更有科技感 */
             text-decoration: none;
             color: white;
             font-weight: bold;
@@ -465,67 +461,30 @@
             position: relative;
             overflow: hidden;
             border: none;
-            /* 去掉边框 */
         }
 
-        /* 鼠标悬停效果：上浮 + 阴影加深 */
         .btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
             filter: brightness(1.1);
-            /* 稍微变亮 */
         }
 
-        /* 点击效果：下沉 */
         .btn:active {
             transform: scale(0.98);
         }
 
-        /* === 给每个按钮定义不同的颜色 === */
-        .btn-album {
-            background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
-            color: #fff;
-        }
-
-        .btn-model {
-            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
-            color: #fff;
-        }
-
-        .btn-music {
-            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-            color: #fff;
-        }
-
-        /* 稍微深一点的字可能更好，但在深色背景下白色安全 */
-        .btn-guest {
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
-            background: #ffbe76;
-        }
-
-        /* 橙色 */
-
-        /* 针对音乐按钮稍微调整一下文字颜色，因为背景较浅 */
-        .btn-music {
-            color: #2c3e50;
-        }
-
-        /* === 页脚样式 === */
         footer {
             margin-top: 50px;
-            /* 离上面内容远一点 */
             text-align: center;
             padding: 20px;
             color: #888;
             font-size: 14px;
         }
 
-        /* 社交图标容器 */
         .social-links {
             margin-top: 10px;
         }
 
-        /* 社交图标样式 */
         .social-links a {
             text-decoration: none;
             font-size: 24px;
@@ -536,17 +495,38 @@
 
         .social-links a:hover {
             transform: scale(1.2) rotate(10deg);
-            /* 鼠标放上去晃动一下 */
         }
 
-        /* 黑夜模式适配 */
         body.dark-mode footer {
             color: #555;
+        }
+
+        .click-emoji {
+            position: fixed;
+            pointer-events: none;
+            user-select: none;
+            z-index: 9999;
+            font-size: 24px;
+            animation: moveUpAndFade 1.2s ease-out forwards;
+        }
+
+        @keyframes moveUpAndFade {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -200%) scale(1.5);
+                opacity: 0;
+            }
         }
     </style>
 </head>
 
 <body>
+
+    <div id="tsparticles"></div>
 
     <div class="toggle-wrapper">
         <input type="checkbox" id="day-night-switch" class="toggle-checkbox">
@@ -569,12 +549,11 @@
     </div>
 
     <div class="card" id="my-card">
-        <img src="assets/images/avatar.jpg" alt="我的头像" class="avatar">
-
+        <img src="assets/images/avatar.jpg" alt="我的头像" class="avatar" onclick="showWelcome()" style="cursor: pointer;">
 
         <h1 id="my-title">👋 你好，世界！</h1>
-        <p>这是我在 GitHub Pages 搭建的第一个网页。</p>
-        <p>现在它拥有了头像和昼夜切换功能！</p>
+        <p>我还在不断完善这个网页。</p>
+        <p>现在它拥有了搜索🔍功能！</p>
         <div class="search-wrapper">
             <span class="search-icon">🔍</span>
             <input type="text" class="search-input" id="global-search" placeholder="搜索 教程 / 音乐 / 功能...">
@@ -584,142 +563,127 @@
             <a href="javascript:void(0)" onclick="checkAlbumPassword()" class="btn" style="background: #FF7F50;">
                 <span>📸</span> 相册
             </a>
-
-            <a href="model.html" class="btn" style="background: #9370DB;">
+            <a href="SecondSheet/tutorials.html" class="btn"
+                style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <span>📚</span> 教程分享
+            </a>
+            <a href="SecondSheet/music.html" class="btn" style="background: #20B2AA;">
+                <span>🎵</span> 听音乐
+            </a>
+            <a href="SecondSheet/resume.html" class="btn"
+                style="background: linear-gradient(135deg, #434343 0%, #000000 100%);">
+                <span>📄</span> 我的简历
+            </a>
+            <a href="SecondSheet/model.html" class="btn" style="background: #9370DB;">
                 <span>🧊</span> 3D展示
             </a>
 
-            <a href="music.html" class="btn" style="background: #20B2AA;">
-                <span>🎵</span> 听音乐
-            </a>
-
-            <a href="guestbook.html" class="btn" style="background: #FFB6C1;">
+            <a href="SecondSheet/guestbook.html" class="btn" style="background: #FFB6C1;">
                 <span>💬</span> 留言墙
             </a>
-            <a href="tutorials.html" class="btn" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                <span>📚</span> 教程分享
-            </a>
-            <a href="resume.html" class="btn" style="background: linear-gradient(135deg, #434343 0%, #000000 100%);">
-                <span>📄</span> 我的简历
-            </a>
-            <a href="wishes.html" class="btn" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+
+            <a href="SecondSheet/wishes.html" class="btn"
+                style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                 <span>🎁</span> 温馨祝福
+            </a>
+            <a href="SecondSheet/game.html" class="btn"
+                style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <span>🎰</span> 五子棋游戏
+            </a>
+            <a href="SecondSheet/格式处理.html" class="btn"
+                style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <span>📊</span> 格式处理
+            </a>
+            <a href="SecondSheet/Program_Size_分析.html" class="btn"
+                style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <span>📊</span> Program大小分析
             </a>
         </div>
     </div>
-    <script>
-        function checkAlbumPassword() {
-            // 1. 弹出一个输入框
-            var password = prompt("🔒 这是一个私密相册，请输入访问密码：");
 
-            // 2. 在这里修改你的密码，比如把 "123456" 改成你自己想要的
-            var correctPassword = "密码";
-
-            // 3. 判断密码
-            if (password === correctPassword) {
-                // 密码正确，跳转页面
-                window.location.href = "album.html";
-            } else if (password !== null) {
-                // 密码错误（且用户没有点取消）
-                alert("🚫 密码错误，禁止访问！");
-            }
-        }
-    </script>
     <footer>
         <p>© 2026 安稳 | Powered by GitHub Pages</p>
         <div class="social-links">
             <a href="https://github.com/你的用户名" target="_blank" title="我的 GitHub">🐙</a>
             <a href="https://gitee.com/secure-two" target="_blank" title="我的 Gitee">😎</a>
             <a href="https://space.bilibili.com/1941246626" target="_blank" title="我的 B站">📺</a>
-            <a href="javascript:void(0);" onclick="copyText('753161269@qq.com')" title="QQ: 753161269@qq.com">📧</a>
-
+            <a href="javascript:void(0);" onclick="copyText('753161269@qq.com')" title="QQ: 753161269@qq.com">🐧</a>
+            <a href="javascript:void(0);" onclick="copyText('anwen9453@gmail.com')"
+                title="Email: anwen9453@gmail.com">📧</a>
         </div>
     </footer>
+
     <script>
+        function showWelcome() {
+            const div = document.createElement('div');
+            div.textContent = "✨ 你好！你好！你好！";
+            div.style.cssText = `
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8); color: white; padding: 20px 40px;
+                border-radius: 50px; font-size: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                z-index: 9999; opacity: 0; transition: opacity 0.5s;
+            `;
+            document.body.appendChild(div);
+            requestAnimationFrame(() => div.style.opacity = '1');
+            setTimeout(() => {
+                div.style.opacity = '0';
+                setTimeout(() => div.remove(), 500);
+            }, 2000);
+        }
+
+        function checkAlbumPassword() {
+            var password = prompt("🔒 这是一个私密相册，请输入访问密码：");
+            var correctPassword = "密码";
+            if (password === correctPassword) {
+                window.location.href = "SecondSheet/album.html";
+            } else if (password !== null) {
+                alert("🚫 密码错误，禁止访问！");
+            }
+        }
+
         function copyText(text) {
             navigator.clipboard.writeText(text).then(() => {
-                alert('QQ号码已复制到剪贴板！');
-            }).catch(err => {
-                console.error('复制失败:', err);
-            });
+                if (text.includes('@qq.com')) alert('QQ邮箱已复制到剪贴板！');
+                else if (text.includes('@gmail.com')) alert('Gmail邮箱已复制到剪贴板！');
+                else alert('内容已复制到剪贴板！');
+            }).catch(err => console.error('复制失败:', err));
         }
     </script>
     <script src="assets/js/theme.js"></script>
     <script>
+        // 搜索功能
         const searchInput = document.getElementById('global-search');
         const resultsBox = document.getElementById('search-results-box');
-
-        // 1. 定义本地所有的静态页面
         let searchableData = [
-            { title: "我的相册", type: "功能", url: "album.html", icon: "📸" },
-            { title: "3D 模型展示", type: "功能", url: "model.html", icon: "🧊" },
-            { title: "音乐播放器", type: "功能", url: "music.html", icon: "🎵" },
-            { title: "留言墙", type: "功能", url: "guestbook.html", icon: "💬" },
-            { title: "我的简历", type: "简历", url: "resume.html", icon: "📄" },
-            { title: "五子棋游戏", type: "游戏", url: "gomoku.html", icon: "⚫" }
+            { title: "我的相册", type: "功能", url: "SecondSheet/album.html", icon: "📸" },
+            { title: "3D 模型展示", type: "功能", url: "SecondSheet/model.html", icon: "🧊" },
+            { title: "音乐播放器", type: "功能", url: "SecondSheet/music.html", icon: "🎵" },
+            { title: "留言墙", type: "功能", url: "SecondSheet/guestbook.html", icon: "💬" },
+            { title: "我的简历", type: "简历", url: "SecondSheet/resume.html", icon: "📄" },
+            { title: "五子棋游戏", type: "游戏", url: "SecondSheet/game.html", icon: "⚫" }
         ];
 
-        // 2. 网页加载时，去抓取 json 里的数据 (教程 + 音乐)
         Promise.all([
             fetch('data/tutorials.json').then(res => res.ok ? res.json() : []),
             fetch('data/music.json').then(res => res.ok ? res.json() : [])
         ]).then(([tutorials, music]) => {
-
-            // 把教程加进搜索库
-            tutorials.forEach(t => {
-                searchableData.push({
-                    title: t.title,
-                    type: "教程",
-                    url: t.link, // 教程直接跳外部链接
-                    icon: "📚",
-                    isExternal: true
-                });
-            });
-
-            // 把音乐加进搜索库
-            music.forEach(m => {
-                searchableData.push({
-                    title: m.title + " - " + m.artist,
-                    type: "音乐",
-                    url: "music.html", // 搜到音乐就去音乐页面
-                    icon: "🎧"
-                });
-            });
-
-            console.log("搜索库构建完成，共 " + searchableData.length + " 条数据");
+            tutorials.forEach(t => searchableData.push({ title: t.title, type: "教程", url: t.link, icon: "📚", isExternal: true }));
+            music.forEach(m => searchableData.push({ title: m.title + " - " + m.artist, type: "音乐", url: "music.html", icon: "🎧" }));
         });
 
-        // 3. 监听输入事件
         searchInput.addEventListener('input', (e) => {
             const keyword = e.target.value.toLowerCase().trim();
-            resultsBox.innerHTML = ''; // 清空旧结果
-
-            if (keyword.length === 0) {
-                resultsBox.style.display = 'none';
-                return;
-            }
-
-            // 过滤数据 (匹配标题)
-            const results = searchableData.filter(item =>
-                item.title.toLowerCase().includes(keyword)
-            );
-
-            // 显示结果
+            resultsBox.innerHTML = '';
+            if (keyword.length === 0) { resultsBox.style.display = 'none'; return; }
+            const results = searchableData.filter(item => item.title.toLowerCase().includes(keyword));
             if (results.length > 0) {
                 resultsBox.style.display = 'block';
                 results.forEach(item => {
                     const link = document.createElement('a');
                     link.className = 'search-item';
                     link.href = item.url;
-
-                    // 如果是外部链接，新标签页打开
                     if (item.isExternal) link.target = "_blank";
-
-                    link.innerHTML = `
-                            <span class="type-icon">${item.icon}</span>
-                            <span class="item-title">${item.title}</span>
-                            <span class="item-sub">${item.type}</span>
-                        `;
+                    link.innerHTML = `<span class="type-icon">${item.icon}</span><span class="item-title">${item.title}</span><span class="item-sub">${item.type}</span>`;
                     resultsBox.appendChild(link);
                 });
             } else {
@@ -728,12 +692,107 @@
             }
         });
 
-        // 4. 点击页面其他地方关闭搜索框
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.search-wrapper')) {
-                resultsBox.style.display = 'none';
-            }
+            if (!e.target.closest('.search-wrapper')) resultsBox.style.display = 'none';
         });
+
+        // 鼠标点击掉落 emoji
+        document.addEventListener('click', function (e) {
+            // 防止点击右上角的深色模式按钮时，或者在拖动卡片文字时意外触发过多的 emoji
+            if (e.target.closest('.toggle-wrapper')) return;
+
+            const emojis = ["❤️", "⭐", "✨", "😊", "🔥", "🌈", "🎈", "🌸", "😍", "🤣", "😂", "😎", "😘", "💕", "🥰", "🤩", "😜", "😛"];
+            const span = document.createElement('span');
+            span.className = 'click-emoji';
+            span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            span.style.left = e.clientX + 'px';
+            span.style.top = e.clientY + 'px';
+            const randomRotation = (Math.random() - 0.5) * 40;
+            span.style.transform = `translate(-50%, -50%) rotate(${randomRotation}deg)`;
+            document.body.appendChild(span);
+            setTimeout(() => span.remove(), 1200);
+        });
+    </script>
+
+    <script>
+        // 定义一个函数来生成粒子的配置（根据白天/黑夜改变颜色）
+        const getParticlesConfig = (isDark) => {
+            // 白天用清新的蓝色，黑夜用发光的青蓝色
+            const particleColor = isDark ? "#00f2fe" : "#4facfe";
+            const lineColor = isDark ? "#ffffff" : "#4facfe";
+
+            return {
+                fpsLimit: 60,
+                interactivity: {
+                    events: {
+                        onHover: {
+                            enable: true,
+                            mode: "grab", // grab 模式：鼠标靠近时会吸附线条
+                        },
+                        onClick: {
+                            enable: true,
+                            mode: "push", // 点击时额外生成几个粒子
+                        },
+                        resize: true,
+                    },
+                    modes: {
+                        grab: {
+                            distance: 180,
+                            links: { opacity: 0.6 } // 吸附线条的透明度
+                        },
+                        push: { quantity: 3 }, // 每次点击发射3个
+                    },
+                },
+                particles: {
+                    color: { value: particleColor },
+                    links: {
+                        color: lineColor,
+                        distance: 150,
+                        enable: true, // 开启粒子之间的连线
+                        opacity: isDark ? 0.3 : 0.4,
+                        width: 1,
+                    },
+                    move: {
+                        enable: true,
+                        speed: 1.5, // 粒子飘动的速度
+                        direction: "none",
+                        random: false,
+                        straight: false,
+                        outModes: "out",
+                    },
+                    number: {
+                        density: { enable: true, area: 800 },
+                        value: 60, // 屏幕上的粒子总数（别调太大，会卡）
+                    },
+                    opacity: { value: 0.6 },
+                    shape: { type: "circle" },
+                    size: { value: { min: 1, max: 3 } },
+                },
+                detectRetina: true, // 适配高分屏
+            };
+        };
+
+        // 核心渲染逻辑
+        const renderParticles = () => {
+            const isDark = document.body.classList.contains('dark-mode');
+            tsParticles.load("tsparticles", getParticlesConfig(isDark));
+        };
+
+        // 1. 等待页面加载完毕后，根据当前主题渲染一次
+        window.addEventListener('DOMContentLoaded', () => {
+            // 给 theme.js 一点点时间去读取本地存储和添加类名
+            setTimeout(renderParticles, 100);
+        });
+
+        // 2. 监听页面的类名变化（当点击右上角切换黑夜模式时，重新加载对应的颜色）
+        const themeObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    renderParticles();
+                }
+            });
+        });
+        themeObserver.observe(document.body, { attributes: true });
     </script>
 </body>
 

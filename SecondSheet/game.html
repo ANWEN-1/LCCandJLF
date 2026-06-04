@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幸运老虎机 - 90%中奖率版</title>
+    <style>
+        /* === 全局样式 === */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+            /* 深色渐变背景 */
+            color: #ecf0f1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            user-select: none;
+            position: relative;
+            /* 为绝对定位的子元素提供基准 */
+        }
+
+        /* === 新增：右上角返回按钮样式 === */
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(52, 73, 94, 0.8);
+            /* 半透明深色背景 */
+            color: #f1c40f;
+            /* 金色文字 */
+            text-decoration: none;
+            /* 去掉下划线 */
+            border-radius: 30px;
+            /* 圆角 */
+            border: 2px solid #f1c40f;
+            /* 金色边框 */
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 100;
+            /* 确保在最上层 */
+            font-size: 0.9em;
+            backdrop-filter: blur(5px);
+            /* 背景毛玻璃效果 (现代浏览器支持) */
+        }
+
+        .back-btn:hover {
+            background: #f1c40f;
+            color: #2c3e50;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            margin-top: 60px;
+            /* 增加顶部边距，防止在小屏幕上遮挡按钮 */
+            margin-bottom: 20px;
+            font-size: 3em;
+            color: #f1c40f;
+            text-shadow: 3px 3px 0px #c0392b, 6px 6px 0px #000;
+            letter-spacing: 2px;
+            text-align: center;
+        }
+
+        /* === 游戏主体容器 === */
+        .slot-machine-container {
+            background: #34495e;
+            padding: 40px;
+            border-radius: 25px;
+            border: 8px solid #f1c40f;
+            /* 金色边框 */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        /* === 积分显示 === */
+        .credit-display {
+            font-size: 1.5em;
+            margin-bottom: 25px;
+            padding: 10px;
+            background: #2c3e50;
+            border-radius: 15px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+            color: #2ecc71;
+            /* 绿色数字 */
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        #credits {
+            color: #f1c40f;
+        }
+
+        /* === 转轴区域 === */
+        .reels-frame {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #22313f;
+            border-radius: 15px;
+            border: 4px solid #95a5a6;
+            box-shadow: inset 0 5px 15px rgba(0, 0, 0, 0.8);
+        }
+
+        .reel {
+            width: 80px;
+            height: 110px;
+            background: #ecf0f1;
+            color: #333;
+            font-size: 4em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            border: 3px solid #bdc3c7;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2), inset 0 0 15px rgba(255, 255, 255, 0.8);
+            overflow: hidden;
+            /* 隐藏滚动时的溢出 */
+            position: relative;
+        }
+
+        /* 模拟转动的模糊效果 */
+        .reel.spinning span {
+            animation: blur-spin 0.1s infinite linear;
+            filter: blur(2px);
+        }
+
+        @keyframes blur-spin {
+            0% {
+                transform: translateY(-10%);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: translateY(10%);
+                opacity: 0.7;
+            }
+        }
+
+        /* === 消息提示 === */
+        .message-box {
+            height: 40px;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ecf0f1;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .win-message {
+            color: #f1c40f;
+            animation: pulse 0.8s infinite;
+        }
+
+        .lose-message {
+            color: #e74c3c;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* === 按钮样式 === */
+        #spin-btn {
+            padding: 15px 40px;
+            font-size: 1.4em;
+            background: linear-gradient(to bottom, #f1c40f, #f39c12);
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            border: none;
+            border-radius: 50px;
+            /* 圆角按钮 */
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3), inset 0 2px 3px rgba(255, 255, 255, 0.4);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        #spin-btn:hover:not(:disabled) {
+            background: linear-gradient(to bottom, #f39c12, #e67e22);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4), inset 0 2px 3px rgba(255, 255, 255, 0.4);
+        }
+
+        #spin-btn:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), inset 0 2px 3px rgba(255, 255, 255, 0.2);
+        }
+
+        #spin-btn:disabled {
+            background: #95a5a6;
+            color: #bdc3c7;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* 移动端适配调整 */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2em;
+                margin-top: 80px;
+            }
+
+            .reel {
+                width: 60px;
+                height: 80px;
+                font-size: 3em;
+            }
+
+            .back-btn {
+                padding: 8px 15px;
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="../index.html" class="back-btn">← 返回主页</a>
+
+    <h1>🎰 幸运老虎机 🎰</h1>
+
+    <div class="slot-machine-container">
+        <div class="credit-display">
+            当前积分: <span id="credits">200</span>
+        </div>
+
+        <div class="reels-frame">
+            <div class="reel" id="reel1"><span>❓</span></div>
+            <div class="reel" id="reel2"><span>❓</span></div>
+            <div class="reel" id="reel3"><span>❓</span></div>
+        </div>
+
+        <div class="message-box" id="message">
+            中奖率已上调至 90%！准备起飞！
+        </div>
+
+        <button id="spin-btn" onclick="startSpin()">开始旋转 (消耗10积分)</button>
+    </div>
+
+    <script>
+        // === 游戏配置 ===
+        const symbols = ['🍒', '🍋', '🍊', '🍉', '🍇', '7️⃣', '💎', '🔔'];
+        const SPIN_COST = 10;     // 每次旋转消耗
+        let credits = 200;        // 初始积分调高到200
+        let isSpinning = false;   // 状态锁
+
+        // === DOM 元素 ===
+        const reel1 = document.getElementById('reel1').querySelector('span');
+        const reel2 = document.getElementById('reel2').querySelector('span');
+        const reel3 = document.getElementById('reel3').querySelector('span');
+        const reelsList = [reel1, reel2, reel3];
+        const creditsDisplay = document.getElementById('credits');
+        const messageDisplay = document.getElementById('message');
+        const spinBtn = document.getElementById('spin-btn');
+        const creditsContainer = document.querySelector('.credit-display');
+
+        // === 游戏主逻辑 ===
+        function startSpin() {
+            if (isSpinning) return;
+            if (credits < SPIN_COST) {
+                setMessage("积分不足！请刷新页面重置。", "lose-message");
+                return;
+            }
+
+            credits -= SPIN_COST;
+            updateUI();
+            isSpinning = true;
+            spinBtn.disabled = true;
+            setMessage("🔥 超高爆率启动中...", "");
+
+            reelsList.forEach(reel => reel.parentElement.classList.add('spinning'));
+
+            let spinFrames = 0;
+            const maxFrames = 12; // 动画速度加快
+
+            const spinInterval = setInterval(() => {
+                reelsList.forEach(reel => {
+                    reel.innerText = getRandomSymbol();
+                });
+                spinFrames++;
+
+                if (spinFrames >= maxFrames) {
+                    clearInterval(spinInterval);
+                    finalizeSpin();
+                }
+            }, 100);
+        }
+
+        // === [核心修改] 90% 中奖率逻辑 ===
+        function finalizeSpin() {
+            let finalResults = [];
+
+            const luck = Math.random(); // 0.0 到 1.0
+
+            // === 操控概率区域 (合计 90%) ===
+            if (luck < 0.60) {
+                // 60% 几率：强制三连（大奖）
+                const winningSymbol = getRandomSymbol();
+                finalResults = [winningSymbol, winningSymbol, winningSymbol];
+            }
+            else if (luck < 0.90) {
+                // 30% 几率 (0.60 到 0.90)：强制双樱桃（保底奖）
+                // 确保至少两个樱桃，第三个随机但不是樱桃
+                let other;
+                do { other = getRandomSymbol(); } while (other === '🍒');
+                finalResults = ['🍒', '🍒', other];
+                // 简单的随机打乱一下位置，让它看起来不像固定的前两个
+                if (Math.random() > 0.5) finalResults = ['🍒', other, '🍒'];
+                if (Math.random() > 0.8) finalResults = [other, '🍒', '🍒'];
+            }
+            // === 完全随机区域 (剩下 10%) ===
+            else {
+                // 剩下 10%：完全随机（基本就是不中奖）
+                // 为了确保这10%大概率不中奖，我们手动生成一个杂乱序列
+                let s1 = getRandomSymbol();
+                let s2 = getRandomSymbol();
+                let s3 = getRandomSymbol();
+                // 简单的防碰撞，确保它们大概率不一样
+                while (s2 === s1) s2 = getRandomSymbol();
+                while (s3 === s1 || s3 === s2) s3 = getRandomSymbol();
+
+                // 如果运气爆棚在随机里也随机到了双樱桃，强制改掉一个
+                if ([s1, s2, s3].filter(s => s === '🍒').length >= 2) s2 = '🍋';
+
+                finalResults = [s1, s2, s3];
+            }
+
+            // 更新视图
+            reelsList.forEach((reel, index) => {
+                reel.innerText = finalResults[index];
+                reel.parentElement.classList.remove('spinning');
+            });
+
+            checkWin(finalResults);
+
+            isSpinning = false;
+            spinBtn.disabled = false;
+            updateUI();
+        }
+
+        function getRandomSymbol() {
+            return symbols[Math.floor(Math.random() * symbols.length)];
+        }
+
+        function checkWin(results) {
+            const [s1, s2, s3] = results;
+            let winAmount = 0;
+            let msgText = "正在积攒好运";
+            let msgClass = "lose-message";
+
+            // 规则1: 三连
+            if (s1 === s2 && s2 === s3) {
+                msgClass = "win-message";
+                switch (s1) {
+                    case '💎': winAmount = 500; break;
+                    case '7️⃣': winAmount = 300; break;
+                    case '🔔': winAmount = 200; break;
+                    case '🍇': winAmount = 100; break;
+                    case '🍉': winAmount = 80; break;
+                    case '🍊': winAmount = 60; break;
+                    case '🍋': winAmount = 40; break;
+                    case '🍒': winAmount = 30; break;
+                    default: winAmount = 20;
+                }
+                msgText = `🎰 恭喜！三连大奖！赢得 ${winAmount} 积分！`;
+            }
+            // 规则2: 双樱桃
+            else {
+                const cherryCount = results.filter(s => s === '🍒').length;
+                if (cherryCount >= 2) {
+                    winAmount = 15;
+                    msgClass = "win-message";
+                    msgText = `🍒 运气不错！双樱桃！赢得 ${winAmount} 积分！`;
+                }
+            }
+
+            if (winAmount > 0) {
+                credits += winAmount;
+                // 赢了之后积分栏闪烁金色
+                creditsDisplay.style.color = '#fff';
+                creditsContainer.style.backgroundColor = '#f1c40f';
+                setTimeout(() => {
+                    creditsDisplay.style.color = '#f1c40f';
+                    creditsContainer.style.backgroundColor = '#2c3e50';
+                }, 600);
+            }
+
+            setMessage(msgText, msgClass);
+        }
+
+        function updateUI() {
+            creditsDisplay.innerText = credits;
+        }
+
+        function setMessage(text, className) {
+            messageDisplay.innerText = text;
+            messageDisplay.className = "message-box " + className;
+        }
+
+        // 初始化
+        updateUI();
+    </script>
+</body>
+
+</html>

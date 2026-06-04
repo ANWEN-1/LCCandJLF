@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>挑选你喜欢的颜色 - 色彩灵感库</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '.dark-mode'],
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* === 卡片基础动画 === */
+        .color-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .color-card:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+
+        .color-card:active {
+            transform: translateY(2px) scale(0.98);
+        }
+
+        /* 卡片右上角的高光折射效果 */
+        .color-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle top right, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+            opacity: 0.6;
+            border-radius: 0 24px 0 100%;
+            pointer-events: none;
+        }
+
+        /* === 底部操作面板动画 === */
+        #action-sheet {
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.3s;
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #action-sheet.active {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #sheet-overlay {
+            transition: opacity 0.3s;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #sheet-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 dark:bg-[#1a2340] min-h-screen pb-20 text-slate-800 dark:text-slate-100">
+    <div id="toast-container" class="fixed top-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+    <div class="max-w-6xl mx-auto px-6 py-10">
+        <header class="mb-12">
+            <div>
+                <a href="../index.html"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#2b324d] text-slate-600 dark:text-gray-300 rounded-full border border-slate-200 dark:border-[#444] shadow-sm hover:bg-slate-50 dark:hover:bg-[#384260] transition-all font-medium text-sm mb-6">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    返回主页
+                </a>
+
+                <h1 class="text-4xl font-black tracking-tight mb-2 dark:text-white">挑一些你喜欢的颜色</h1>
+                <p class="text-slate-500 dark:text-gray-400 font-medium">颜色有助于在你的设计中传达情感，点击卡片即可提取代码</p>
+            </div>
+        </header>
+
+        <div class="mb-16">
+            <h2 class="text-2xl font-bold mb-6 text-slate-800 dark:text-white flex items-center gap-2">
+                <span class="w-2 h-6 bg-primary rounded-full"></span> 基础纯色 (Solid)
+            </h2>
+            <div id="solid-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+        </div>
+
+        <div class="mb-16">
+            <h2 class="text-2xl font-bold mb-6 text-slate-800 dark:text-white flex items-center gap-2">
+                <span class="w-2 h-6 bg-purple-500 rounded-full"></span> 质感渐变 (Gradient)
+            </h2>
+            <div id="gradient-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+        </div>
+    </div>
+
+    <div id="sheet-overlay" class="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm z-40"
+        onclick="closeSheet()"></div>
+
+    <div id="action-sheet" class="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-6 px-4">
+        <div
+            class="bg-white dark:bg-[#2b324d] w-full max-w-md rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-[#444]">
+
+            <div id="sheet-preview" class="h-24 w-full transition-all duration-300"></div>
+
+            <div class="p-6 relative">
+                <button onclick="closeSheet()"
+                    class="absolute top-4 right-4 p-2 bg-slate-100 dark:bg-[#1a2340] rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+
+                <h3 id="sheet-title" class="text-2xl font-bold mb-1 dark:text-white">颜色名称</h3>
+                <p id="sheet-desc" class="text-sm text-slate-500 dark:text-gray-400 mb-6">情感描述</p>
+
+                <div class="space-y-3">
+                    <div id="row-hex" class="flex items-center gap-3">
+                        <div class="w-16 text-xs font-bold text-slate-400 dark:text-gray-500">HEX</div>
+                        <code id="code-hex"
+                            class="flex-1 px-4 py-3 bg-slate-50 dark:bg-[#1a2340] rounded-xl font-mono text-sm text-slate-700 dark:text-gray-200 border border-slate-100 dark:border-[#333]"></code>
+                        <button onclick="copyFormat('hex')"
+                            class="px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-[#384260] dark:hover:bg-[#4a5578] rounded-xl font-semibold text-sm transition-colors text-slate-700 dark:text-gray-200 active:scale-95">复制</button>
+                    </div>
+
+                    <div id="row-rgb" class="flex items-center gap-3">
+                        <div class="w-16 text-xs font-bold text-slate-400 dark:text-gray-500">RGB</div>
+                        <code id="code-rgb"
+                            class="flex-1 px-4 py-3 bg-slate-50 dark:bg-[#1a2340] rounded-xl font-mono text-sm text-slate-700 dark:text-gray-200 border border-slate-100 dark:border-[#333]"></code>
+                        <button onclick="copyFormat('rgb')"
+                            class="px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-[#384260] dark:hover:bg-[#4a5578] rounded-xl font-semibold text-sm transition-colors text-slate-700 dark:text-gray-200 active:scale-95">复制</button>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <div class="w-16 text-xs font-bold text-slate-400 dark:text-gray-500">CSS</div>
+                        <code id="code-css"
+                            class="flex-1 px-4 py-3 bg-slate-50 dark:bg-[#1a2340] rounded-xl font-mono text-sm text-slate-700 dark:text-gray-200 border border-slate-100 dark:border-[#333] truncate"
+                            title="点击可查看完整代码"></code>
+                        <button onclick="copyFormat('css')"
+                            class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white dark:bg-sky-500 dark:hover:bg-sky-400 rounded-xl font-semibold text-sm transition-colors active:scale-95 shadow-md">复制代码</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === 1. 纯色数据 ===
+        const solidColors = [
+            { name: '蓝色', desc: '信任、宁静、专业、科技与安全', hex: '#3B82F6', rgb: 'rgb(59, 130, 246)', shadow: 'rgba(59, 130, 246, 0.4)' },
+            { name: '紫色', desc: '王权、权力、贵族、奢华、财富与智慧', hex: '#8B5CF6', rgb: 'rgb(139, 92, 246)', shadow: 'rgba(139, 92, 246, 0.4)' },
+            { name: '粉色', desc: '浪漫、温柔、甜蜜、年轻与活力', hex: '#EC4899', rgb: 'rgb(236, 72, 153)', shadow: 'rgba(236, 72, 153, 0.4)' },
+            { name: '红色', desc: '激情、能量、爱、危险与力量', hex: '#EF4444', rgb: 'rgb(239, 68, 68)', shadow: 'rgba(239, 68, 68, 0.4)' },
+            { name: '橙色', desc: '创新、活力、温暖、快乐与进取', hex: '#F97316', rgb: 'rgb(249, 115, 22)', shadow: 'rgba(249, 115, 22, 0.4)' },
+            { name: '黄色', desc: '阳光、乐观、快乐、希望与警示', hex: '#EAB308', rgb: 'rgb(234, 179, 8)', shadow: 'rgba(234, 179, 8, 0.4)' },
+            { name: '绿色', desc: '自然、生机、健康、环保与和平', hex: '#22C55E', rgb: 'rgb(34, 197, 94)', shadow: 'rgba(34, 197, 94, 0.4)' },
+            { name: '青色', desc: '清新、治愈、宁静、灵动与深邃', hex: '#06B6D4', rgb: 'rgb(6, 182, 212)', shadow: 'rgba(6, 182, 212, 0.4)' },
+            { name: '灰度', desc: '平衡、中立、专业、沉稳与低调', hex: '#64748B', rgb: 'rgb(100, 116, 139)', shadow: 'rgba(100, 116, 139, 0.4)' }
+        ];
+
+        // === 2. 渐变色数据 ===
+        const gradientColors = [
+            { name: '极光', desc: '自由、广阔、呼吸、明亮与未来', gradient: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)', shadow: 'rgba(0, 114, 255, 0.4)' },
+            { name: '落日', desc: '珍贵、秋日、温馨、岁月与明媚', gradient: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)', shadow: 'rgba(253, 160, 133, 0.4)' },
+            { name: '紫霞', desc: '神秘、梦幻、艺术、灵感与独特', gradient: 'linear-gradient(135deg, #9D50BB 0%, #6E48AA 100%)', shadow: 'rgba(110, 72, 170, 0.4)' },
+            { name: '樱花', desc: '魅力、优雅、热情、感性与吸引力', gradient: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)', shadow: 'rgba(255, 154, 158, 0.4)' },
+            { name: '赛博', desc: '前卫、霓虹、潮流、虚拟与电竞', gradient: 'linear-gradient(135deg, #f953c6 0%, #b91d73 100%)', shadow: 'rgba(185, 29, 115, 0.4)' },
+            { name: '翡翠', desc: '高级、生机、旺盛、氧气与自然', gradient: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', shadow: 'rgba(56, 239, 125, 0.4)' },
+            { name: '深海', desc: '极简、克制、黑客、星空与静谧', gradient: 'linear-gradient(135deg, #4e4376 0%, #2b5876 100%)', shadow: 'rgba(43, 88, 118, 0.4)' },
+            { name: '珊瑚', desc: '海洋、温柔、生命力、夏日与潮流', gradient: 'linear-gradient(135deg, #ff9966 0%, #ff5e62 100%)', shadow: 'rgba(255, 94, 98, 0.4)' },
+            { name: '冰川', desc: '清凉、透气、干净、冰爽与纯粹', gradient: 'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)', shadow: 'rgba(102, 166, 255, 0.4)' }
+        ];
+
+        let activeColor = null;
+
+        // Toast 提示组件
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? 'bg-emerald-500' : 'bg-primary';
+            toast.className = `${bg} text-white px-6 py-3 rounded-xl shadow-xl transform transition-all duration-300 translate-x-full opacity-0 font-medium text-sm flex items-center gap-2 border-b-4 border-black/10`;
+            toast.innerHTML = msg;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => toast.classList.remove('translate-x-full', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        // 核心渲染函数：根据不同数组渲染不同的区块
+        function renderGroup(colorsArray, containerId, isGradient) {
+            const grid = document.getElementById(containerId);
+            colorsArray.forEach(color => {
+                const card = document.createElement('div');
+                card.className = 'color-card h-52 rounded-3xl p-6 flex flex-col justify-end text-white shadow-lg';
+
+                // 背景区分纯色和渐变色
+                card.style.background = isGradient ? color.gradient : color.hex;
+                card.style.boxShadow = `0 10px 25px -5px ${color.shadow}`;
+
+                card.innerHTML = `
+                    <div class="group h-full flex flex-col justify-end">
+                        <h2 class="text-3xl md:text-4xl font-black tracking-wide mb-4 transition-transform group-hover:-translate-y-1">${color.name}</h2>
+                        <p class="text-base font-medium text-white/90 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100">
+                            ${color.desc}
+                        </p>
+                    </div>
+                `;
+
+                // 传入 isGradient 标记，以便弹出框判断
+                card.onclick = () => openSheet(color, isGradient);
+                grid.appendChild(card);
+            });
+        }
+
+        // === 操作面板逻辑 ===
+        const sheet = document.getElementById('action-sheet');
+        const overlay = document.getElementById('sheet-overlay');
+        const rowHex = document.getElementById('row-hex');
+        const rowRgb = document.getElementById('row-rgb');
+
+        function openSheet(color, isGradient) {
+            activeColor = color;
+            activeColor.isGradient = isGradient; // 保存标记
+
+            document.getElementById('sheet-preview').style.background = isGradient ? color.gradient : color.hex;
+            document.getElementById('sheet-title').innerText = color.name;
+            document.getElementById('sheet-desc').innerText = color.desc;
+
+            if (isGradient) {
+                // 如果是渐变色，隐藏 HEX 和 RGB 行
+                rowHex.classList.add('hidden'); rowHex.classList.remove('flex');
+                rowRgb.classList.add('hidden'); rowRgb.classList.remove('flex');
+                document.getElementById('code-css').innerText = `background: ${color.gradient};`;
+            } else {
+                // 如果是纯色，全部显示
+                rowHex.classList.remove('hidden'); rowHex.classList.add('flex');
+                rowRgb.classList.remove('hidden'); rowRgb.classList.add('flex');
+                document.getElementById('code-hex').innerText = color.hex;
+                document.getElementById('code-rgb').innerText = color.rgb;
+                document.getElementById('code-css').innerText = `background-color: ${color.hex};`;
+            }
+
+            sheet.classList.add('active');
+            overlay.classList.add('active');
+        }
+
+        function closeSheet() {
+            sheet.classList.remove('active');
+            overlay.classList.remove('active');
+            activeColor = null;
+        }
+
+        // === 复制功能 ===
+        function copyFormat(format) {
+            if (!activeColor) return;
+            let textToCopy = '';
+            let formatName = '';
+
+            switch (format) {
+                case 'hex':
+                    textToCopy = activeColor.hex;
+                    formatName = 'HEX 颜色码';
+                    break;
+                case 'rgb':
+                    textToCopy = activeColor.rgb;
+                    formatName = 'RGB 颜色码';
+                    break;
+                case 'css':
+                    textToCopy = activeColor.isGradient ? `background: ${activeColor.gradient};` : `background-color: ${activeColor.hex};`;
+                    formatName = 'CSS 代码';
+                    break;
+            }
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showToast(`✨ ${formatName} 已复制`);
+                closeSheet();
+            }).catch(err => {
+                console.error('复制失败:', err);
+                showToast('❌ 复制失败，请手动选择复制', 'error');
+            });
+        }
+
+        // 启动渲染
+        renderGroup(solidColors, 'solid-grid', false);
+        renderGroup(gradientColors, 'gradient-grid', true);
+
+    </script>
+
+    <script src="../assets/js/theme.js"></script>
+</body>
+
+</html>

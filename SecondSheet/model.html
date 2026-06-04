@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 模型展示厅</title>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+
+    <style>
+        /* === 黑夜模式通用样式 (复制到所有页面) === */
+        body.dark-mode {
+            background-color: #1a2340 !important;
+            /* 背景变深蓝黑 */
+            color: #e0e0e0 !important;
+            /* 文字变灰白 */
+        }
+
+        /* 让所有类型的卡片变黑 (相册卡片、3D卡片、普通卡片) */
+        body.dark-mode .card,
+        body.dark-mode .photo-card,
+        body.dark-mode .model-card,
+        body.dark-mode .modal-content {
+            background-color: #2b324d !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+            color: #fff !important;
+        }
+
+        /* 让标题和文字变白
+        body.dark-mode h1,
+        body.dark-mode h2,
+        body.dark-mode h3,
+        body.dark-mode p {
+            color: #fff !important;
+        } */
+
+        /* 让顶部返回按钮适配 */
+        body.dark-mode .back-btn {
+            background-color: #384260 !important;
+            color: #fff !important;
+            border-color: #555 !important;
+        }
+
+        /* 3D 模型的背景色特殊处理 */
+        body.dark-mode model-viewer {
+            background-color: #2b324d !important;
+        }
+
+        /* === 基础设置 === */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            margin-top: 20px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            text-decoration: none;
+            color: #666;
+            border: 1px solid #ccc;
+            padding: 8px 20px;
+            border-radius: 20px;
+            background: white;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #333;
+            color: white;
+            border-color: #333;
+        }
+
+        /* === 1. 列表网格区域 === */
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* === 2. 单个模型卡片 === */
+        .model-card {
+            background: white;
+            border-radius: 20px;
+            height: 300px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .model-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        /* 列表里的模型：禁止交互 */
+        .model-card model-viewer {
+            width: 100%;
+            height: 100%;
+            background-color: #fafafa;
+            pointer-events: none;
+        }
+
+        .card-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+
+        .card-info h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #2c3e50;
+        }
+
+        .card-info p {
+            margin: 5px 0 0;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        /* === 3. 全屏弹窗 (Modal) === */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            /* 背景更黑一点 */
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* 弹窗内容容器 */
+        .modal-content {
+            width: 100%;
+            height: 100%;
+            /* 全屏铺满 */
+            position: relative;
+            background: transparent;
+            /* 透明背景，让模型悬浮在黑底上 */
+        }
+
+        /* 弹窗里的大模型 */
+        .modal-content model-viewer {
+            width: 100%;
+            height: 100%;
+            --poster-color: transparent;
+        }
+
+        /* === 新增：底部大大的退出按钮 === */
+        .exit-btn {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            /* 居中 */
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            font-size: 16px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            z-index: 1000;
+            /* 保证在模型上面 */
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .exit-btn:hover {
+            background-color: rgba(255, 255, 255, 1);
+            color: #333;
+        }
+
+        /* 右上角的关闭叉叉 (保留着作为备用) */
+        .close-icon {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .close-icon:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="../index.html" class="back-btn">← 返回主页</a>
+        <h1>🧊 3D 模型展示厅</h1>
+        <p>点击模型查看大图细节</p>
+    </header>
+
+    <div class="model-grid" id="grid-container"></div>
+
+    <div class="modal" id="model-modal">
+        <div class="modal-content">
+            <div class="close-icon" onclick="closeModal()">×</div>
+
+            <model-viewer id="big-model" src="" auto-rotate camera-controls shadow-intensity="1" touch-action="none">
+            </model-viewer>
+
+            <button class="exit-btn" onclick="closeModal()">
+                <span>✕</span> 退出预览
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const gridContainer = document.getElementById('grid-container');
+        const modal = document.getElementById('model-modal');
+        const bigModel = document.getElementById('big-model');
+
+        // 读取数据
+        fetch('../data/models.json')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'model-card';
+                    const modelPath = `../${item.src}`;
+                    card.onclick = () => openModal(modelPath);
+                    card.innerHTML = `
+                        <model-viewer 
+                            src="${modelPath}" 
+                            auto-rotate 
+                            rotation-per-second="${item.speed || '30deg'}"
+                            shadow-intensity="0.5">
+                        </model-viewer>
+                        <div class="card-info">
+                            <h3>${item.name}</h3>
+                            <p>${item.desc}</p>
+                        </div>
+                    `;
+                    gridContainer.appendChild(card);
+                });
+            })
+            .catch(err => console.error("读取模型失败:", err));
+
+        // === 修复后的打开逻辑 ===
+        function openModal(modelSrc) {
+            modal.classList.add('active');
+
+            // 为了防止卡住，我们先让它显示，再稍微等一丁点时间赋值 src
+            // 这样浏览器有时间准备 WebGL 环境
+            requestAnimationFrame(() => {
+                bigModel.src = modelSrc;
+                // 重置相机角度，避免保留上一个模型的位置
+                bigModel.cameraOrbit = "0deg 75deg 105%";
+            });
+        }
+
+        // === 修复后的关闭逻辑 ===
+        function closeModal() {
+            modal.classList.remove('active');
+
+            // 关键修复：立即清空 src 可能会导致页面闪烁或卡顿
+            // 我们改成：在动画结束后再清空，并且使用 null 而不是空字符串
+            setTimeout(() => {
+                bigModel.src = null;
+                // 强制让 model-viewer 释放纹理内存（如果它支持的话）
+                // 这是一个 Hack，防止内存泄漏导致的卡顿
+            }, 300);
+        }
+
+        // 点击背景关闭
+        modal.addEventListener('click', (e) => {
+            // 只有点击黑色背景或者内容区本身才关闭，防止点模型时误关
+            if (e.target === modal || e.target === document.querySelector('.modal-content')) {
+                closeModal();
+            }
+        });
+    </script>
+    <script src="../assets/js/theme.js"></script>
+</body>
+
+</html>

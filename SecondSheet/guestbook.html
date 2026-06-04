@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>留言墙</title>
+    <style>
+        /* === 基础风格 (与主页保持一致) === */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #e8eef5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            transition: background-color 0.3s;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            margin-top: 20px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            text-decoration: none;
+            color: #666;
+            border: 1px solid #ccc;
+            padding: 8px 20px;
+            border-radius: 20px;
+            background: white;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #333;
+            color: white;
+            border-color: #333;
+        }
+
+        /* === 留言板容器 === */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        h1 {
+            margin: 10px 0;
+            color: #2c3e50;
+        }
+
+        p {
+            color: #7f8c8d;
+        }
+
+        /* === 黑夜模式适配 === */
+        body.dark-mode {
+            background-color: #1a2340 !important;
+            color: #e0e0e0 !important;
+        }
+
+        body.dark-mode .container {
+            background-color: #2b324d !important;
+            color: #fff !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        body.dark-mode h1 {
+            color: #fff !important;
+        }
+
+        body.dark-mode p {
+            color: #ccc !important;
+        }
+
+        body.dark-mode .back-btn {
+            background-color: #384260 !important;
+            color: #fff !important;
+            border-color: #555 !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="../index.html" class="back-btn">← 返回主页</a>
+        <h1>💬 留言墙</h1>
+        <p>欢迎留下你的足迹，这些留言会永久保存在 GitHub Discussions 中</p>
+    </header>
+
+    <div class="container">
+        <script src="https://giscus.app/client.js" data-repo="ANWEN-1/LCCandJLF" data-repo-id="R_kgDOQ4Ehgg"
+            data-category="General" data-category-id="DIC_kwDOQ4Ehgs4C07aQ" data-mapping="pathname" data-strict="0"
+            data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom"
+            data-theme="preferred_color_scheme" data-lang="zh-CN" crossorigin="anonymous" async>
+            </script>
+    </div>
+
+    <script src="../assets/js/theme.js"></script>
+
+</body>
+
+</html>

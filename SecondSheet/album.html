@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的相册</title>
+    <style>
+        /* === 黑夜模式通用样式 (复制到所有页面) === */
+        body.dark-mode {
+            background-color: #1a2340 !important;
+            /* 背景变深蓝黑 */
+            color: #e0e0e0 !important;
+            /* 文字变灰白 */
+        }
+
+        /* 让所有类型的卡片变黑 (相册卡片、3D卡片、普通卡片) */
+        body.dark-mode .card,
+        body.dark-mode .photo-card,
+        body.dark-mode .model-card,
+        body.dark-mode .modal-content {
+            background-color: #2b324d !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+            color: #fff !important;
+        }
+
+        /* 让标题和文字变白 */
+        body.dark-mode h1,
+        body.dark-mode h2,
+        body.dark-mode h3,
+        body.dark-mode p {
+            color: #fff !important;
+        }
+
+        /* 让顶部返回按钮适配 */
+        body.dark-mode .back-btn {
+            background-color: #384260 !important;
+            color: #fff !important;
+            border-color: #555 !important;
+        }
+
+        /* 3D 模型的背景色特殊处理 */
+        body.dark-mode model-viewer {
+            background-color: #2b324d !important;
+        }
+
+        /* === 基础设置 (保持不变) === */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 80px;
+            margin-top: 20px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            text-decoration: none;
+            color: #666;
+            border: 1px solid #ccc;
+            padding: 8px 20px;
+            border-radius: 20px;
+            background: white;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #333;
+            color: white;
+            border-color: #333;
+        }
+
+        /* === 网格布局 (保持不变) === */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-auto-rows: 200px;
+            gap: 15px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* === 照片卡片 (保持不变) === */
+        .photo-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeIn 0.5s ease-in;
+            position: relative;
+        }
+
+        .photo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* === 图片本体 (重点在这里) === */
+        .photo-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* 必须要有这一句，后面的 position 才会生效 */
+            /* 默认是 object-position: center center; 我们用 JS 来改它 */
+            display: block;
+            transition: transform 0.5s ease;
+            /* 让图片本身也有个缓慢放大的效果 */
+        }
+
+        /* 鼠标放上去，图片稍微放大一点点，增加动感 */
+        .photo-card:hover img {
+            transform: scale(1.05);
+        }
+
+
+        /* 布局类 */
+        .photo-card.wide {
+            grid-column: span 2;
+        }
+
+        .photo-card.large {
+            grid-column: span 2;
+            grid-row: span 2;
+        }
+
+        @media (max-width: 600px) {
+
+            .photo-card.wide,
+            .photo-card.large {
+                grid-column: span 1;
+                grid-row: span 1;
+            }
+        }
+
+        /* 文字说明 */
+        .caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px;
+            font-size: 14px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+
+        .photo-card:hover .caption {
+            transform: translateY(0);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <a href="../index.html" class="back-btn">← 返回主页</a>
+        <h1>📸 我的摄影集</h1>
+        <p id="gallery-info">加载中...</p>
+    </header>
+
+    <div class="gallery" id="gallery-container"></div>
+
+    <script>
+        const galleryContainer = document.getElementById('gallery-container');
+        const infoText = document.getElementById('gallery-info');
+
+        fetch('../data/photos.json')
+            .then(response => response.json())
+            .then(data => {
+                infoText.innerText = `共收集 ${data.length} 张精彩瞬间`;
+
+                data.forEach((photo, index) => {
+                    // 1. 创建卡片容器
+                    const card = document.createElement('div');
+                    card.className = 'photo-card';
+                    if (photo.layout) card.classList.add(photo.layout);
+                    card.style.animationDelay = `${index * 0.1}s`;
+
+                    // 2. 创建图片元素 (用更规范的方式)
+                    const img = document.createElement('img');
+                    img.src = `../assets/images/photos/${photo.filename}`;
+                    img.alt = photo.desc;
+                    img.loading = "lazy";
+
+                    // === 【核心修改】应用自定义焦点 ===
+                    // 如果 JSON 里写了 position，就把它加到图片的样式里
+                    if (photo.position) {
+                        img.style.objectPosition = photo.position;
+                    }
+
+                    // 3. 创建文字说明
+                    const caption = document.createElement('div');
+                    caption.className = 'caption';
+                    caption.innerText = photo.desc;
+
+                    // 4. 组装起来
+                    card.appendChild(img);
+                    card.appendChild(caption);
+                    galleryContainer.appendChild(card);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                infoText.innerText = "读取失败，请检查 photos.json 格式";
+            });
+    </script>
+    <script src="../assets/js/theme.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Program Size 分析与历史对比工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '.dark-mode'],
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0ea5e9',
+                        secondary: '#38bdf8',
+                        light: '#e0f2fe',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .card-shadow {
+                box-shadow: 0 4px 20px rgba(14, 165, 233, 0.08);
+            }
+            .dark-mode .card-shadow {
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            }
+            .tab-active {
+                color: #0ea5e9;
+                border-top: 2px solid #0ea5e9;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 dark:bg-[#1a2340] min-h-screen pb-16 transition-colors duration-300">
+    <div id="toast-container" class="fixed top-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none"></div>
+
+    <div class="max-w-6xl mx-auto px-4 py-8">
+
+        <div class="flex justify-start mb-6">
+            <a href="../index.html"
+                class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#384260] text-slate-600 dark:text-gray-200 rounded-full border border-slate-200 dark:border-[#555] shadow-sm hover:bg-slate-50 dark:hover:bg-[#2b324d] transition-all font-medium text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                返回主页
+            </a>
+        </div>
+
+        <div class="text-center mb-10">
+            <h1
+                class="text-3xl font-bold text-slate-800 dark:bg-gradient-to-r dark:from-primary dark:to-emerald-400 dark:bg-clip-text dark:text-transparent mb-2 transition-colors">
+                🧊 Program Size 分析与对比</h1>
+            <p class="text-slate-500 dark:text-gray-400 transition-colors">解析 Keil/IAR 编译数据，实时监控 Flash 与 RAM 占用变化</p>
+        </div>
+
+        <div id="tabData">
+
+            <div
+                class="bg-white dark:bg-[#2b324d] rounded-xl card-shadow p-6 mb-6 border border-slate-100 dark:border-[#384260] transition-colors duration-300">
+                <h2 class="text-lg font-semibold text-slate-700 dark:text-white mb-4 flex items-center gap-2">
+                    <span class="w-1.5 h-5 bg-primary rounded-full"></span>数据输入
+                </h2>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <input type="text" id="inputText"
+                        placeholder="粘贴: Program Size: Code=xxx RO-data=xxx RW-data=xxx ZI-data=xxx"
+                        class="flex-1 px-4 py-3 border border-slate-200 dark:border-[#555] rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all bg-slate-50/50 dark:bg-[#1a2340] dark:text-white">
+                    <button id="parseBtn"
+                        class="px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all font-semibold shadow-md active:scale-95 w-full md:w-auto">
+                        解析并添加
+                    </button>
+                </div>
+                <p
+                    class="text-xs text-slate-400 dark:text-gray-400 mt-3 bg-slate-50 dark:bg-[#1a2340]/50 p-2 rounded border border-dashed border-slate-200 dark:border-[#555]">
+                    💡 提示：直接复制编译器输出的整行即可。支持带逗号的数字（如 234,004）。
+                </p>
+            </div>
+
+            <div
+                class="bg-white dark:bg-[#2b324d] rounded-xl card-shadow p-6 mb-6 border border-slate-100 dark:border-[#384260] transition-colors duration-300 relative overflow-hidden">
+
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-slate-700 dark:text-white flex items-center gap-2">
+                        <span class="w-1.5 h-5 bg-emerald-500 rounded-full"></span>资源配额 (Limit)
+                    </h2>
+                    <button id="gearBtn"
+                        class="p-2 text-slate-400 hover:text-primary dark:text-gray-400 dark:hover:text-primary transition-colors rounded-full hover:bg-slate-50 dark:hover:bg-[#384260]"
+                        title="设置配额与开发板">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="viewMode" class="block animate-[fadeIn_0.3s_ease-out]">
+                    <div
+                        class="mb-4 text-sm text-slate-500 dark:text-gray-400 bg-slate-50 dark:bg-[#1a2340]/50 inline-block px-3 py-1.5 rounded-lg border border-slate-100 dark:border-[#384260]">
+                        当前生效: <span id="currentLimitText" class="font-bold text-primary dark:text-sky-400">未设置</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mb-2 uppercase tracking-wider font-bold">已保存的开发板 (点击切换)</p>
+                    <div class="flex flex-wrap gap-2" id="presetContainer">
+                    </div>
+                </div>
+
+                <div id="editMode" class="hidden animate-[fadeIn_0.3s_ease-out]">
+
+                    <div
+                        class="mb-4 bg-slate-50 dark:bg-[#1a2340]/50 p-4 rounded-xl border border-slate-100 dark:border-[#384260]">
+                        <h3 class="text-sm font-bold text-slate-700 dark:text-gray-200 mb-3 flex items-center gap-2">
+                            <span class="w-1 h-3 bg-primary rounded-full"></span>临时指定当前配额
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label
+                                    class="block text-[11px] font-bold text-slate-400 dark:text-gray-500 mb-1 uppercase tracking-wider">Flash
+                                    Total (KB)</label>
+                                <input type="number" id="boardFlash"
+                                    class="w-full px-4 py-2 border border-slate-200 dark:border-[#555] rounded-lg focus:ring-2 focus:ring-primary/50 outline-none dark:bg-[#1a2340] dark:text-white transition-colors"
+                                    placeholder="如 1024">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[11px] font-bold text-slate-400 dark:text-gray-500 mb-1 uppercase tracking-wider">RAM
+                                    Total (KB)</label>
+                                <input type="number" id="boardRam"
+                                    class="w-full px-4 py-2 border border-slate-200 dark:border-[#555] rounded-lg focus:ring-2 focus:ring-primary/50 outline-none dark:bg-[#1a2340] dark:text-white transition-colors"
+                                    placeholder="如 192">
+                            </div>
+                        </div>
+                        <div class="mt-3 text-right">
+                            <button id="saveBoardConfigBtn"
+                                class="px-5 py-2 bg-slate-800 dark:bg-[#0ea5e9] text-white text-sm font-semibold rounded-lg hover:bg-slate-700 dark:hover:bg-[#38bdf8] transition-colors shadow-sm active:scale-95">应用当前输入</button>
+                        </div>
+                    </div>
+
+                    <div
+                        class="mb-2 bg-slate-50 dark:bg-[#1a2340]/50 p-4 rounded-xl border border-slate-100 dark:border-[#384260]">
+                        <h3 class="text-sm font-bold text-slate-700 dark:text-gray-200 mb-3 flex items-center gap-2">
+                            <span class="w-1 h-3 bg-emerald-500 rounded-full"></span>收藏自定义开发板
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                            <div>
+                                <label
+                                    class="block text-[11px] font-bold text-slate-400 dark:text-gray-500 mb-1 uppercase tracking-wider">开发板名称</label>
+                                <input type="text" id="newPresetName"
+                                    class="w-full px-4 py-2 border border-slate-200 dark:border-[#555] rounded-lg focus:ring-2 focus:ring-emerald-500/50 outline-none dark:bg-[#1a2340] dark:text-white transition-colors"
+                                    placeholder="如 ESP32">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[11px] font-bold text-slate-400 dark:text-gray-500 mb-1 uppercase tracking-wider">Flash
+                                    (KB)</label>
+                                <input type="number" id="newPresetFlash"
+                                    class="w-full px-4 py-2 border border-slate-200 dark:border-[#555] rounded-lg focus:ring-2 focus:ring-emerald-500/50 outline-none dark:bg-[#1a2340] dark:text-white transition-colors"
+                                    placeholder="4096">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[11px] font-bold text-slate-400 dark:text-gray-500 mb-1 uppercase tracking-wider">RAM
+                                    (KB)</label>
+                                <input type="number" id="newPresetRam"
+                                    class="w-full px-4 py-2 border border-slate-200 dark:border-[#555] rounded-lg focus:ring-2 focus:ring-emerald-500/50 outline-none dark:bg-[#1a2340] dark:text-white transition-colors"
+                                    placeholder="520">
+                            </div>
+                        </div>
+                        <div class="mt-3 text-right">
+                            <button id="addPresetBtn"
+                                class="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm active:scale-95">➕
+                                添加到预设库</button>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center mt-4 pt-4 border-t border-slate-100 dark:border-[#384260]">
+                        <button id="cancelBtn"
+                            class="px-8 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-[#384260] dark:hover:bg-[#4a5578] text-slate-600 dark:text-gray-200 rounded-full transition-all font-medium text-sm w-full md:w-auto">完成设置
+                            / 收起</button>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="bg-white dark:bg-[#2b324d] rounded-xl card-shadow p-6 mb-6 border border-slate-100 dark:border-[#384260] transition-colors duration-300">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold text-slate-700 dark:text-white">📜 历史记录</h2>
+                    <button id="clearAllBtn"
+                        class="text-xs font-bold text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors uppercase tracking-widest">清空数据</button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm min-w-[900px]">
+                        <thead class="bg-slate-50/50 dark:bg-[#1a2340]/50 transition-colors">
+                            <tr>
+                                <th
+                                    class="text-left py-4 px-4 text-slate-500 dark:text-gray-300 font-semibold border-b border-slate-200 dark:border-[#444]">
+                                    录入时间</th>
+                                <th
+                                    class="text-right py-4 px-2 text-slate-500 dark:text-gray-300 font-semibold border-b border-slate-200 dark:border-[#444]">
+                                    Code</th>
+                                <th
+                                    class="text-right py-4 px-2 text-slate-500 dark:text-gray-300 font-semibold border-b border-slate-200 dark:border-[#444]">
+                                    Flash(KB)</th>
+                                <th
+                                    class="text-right py-4 px-2 text-slate-500 dark:text-gray-300 font-semibold border-b border-slate-200 dark:border-[#444]">
+                                    RAM(KB)</th>
+                                <th
+                                    class="text-right py-4 px-2 text-slate-500 dark:text-gray-300 font-semibold border-b border-slate-200 dark:border-[#444]">
+                                    Flash %</th>
+                                <th
+                                    class="text-right py-4 px-2 text-slate-500 dark:text-gray-300 font-semibold border-b border-slate-200 dark:border-[#444]">
+                                    RAM %</th>
+                                <th
+                                    class="text-center py-4 px-4 text-slate-500 dark:text-gray-300 font-semibold border-b border-slate-200 dark:border-[#444]">
+                                    操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTable" class="divide-y divide-slate-100 dark:divide-[#444]"></tbody>
+                    </table>
+                    <div id="emptyTip" class="text-center py-20 text-slate-300 dark:text-[#666] italic">暂无数据</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tabChart" class="hidden">
+            <div
+                class="bg-white dark:bg-[#2b324d] rounded-xl card-shadow p-6 border border-slate-100 dark:border-[#384260] transition-colors duration-300">
+                <h2 class="text-lg font-semibold text-slate-700 dark:text-white mb-6 flex items-center gap-2">📈 资源占用走势图
+                </h2>
+                <div id="chart" class="w-full h-[550px]"></div>
+            </div>
+        </div>
+    </div>
+
+    <div
+        class="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-[#2b324d]/90 backdrop-blur-md border-t border-slate-200 dark:border-[#1a2340] flex z-50 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_-5px_20px_rgba(0,0,0,0.4)] transition-colors duration-300">
+        <button id="tabBtnData" class="flex-1 py-4 text-center tab-active" data-target="tabData">
+            <span class="text-sm font-bold">数据清单</span>
+        </button>
+        <button id="tabBtnChart" class="flex-1 py-4 text-center text-slate-400 dark:text-gray-400"
+            data-target="tabChart">
+            <span class="text-sm font-bold">趋势图表</span>
+        </button>
+    </div>
+
+    <script>
+        // 存储的 Key
+        const STORAGE_KEY = 'program_size_history_v2';
+        const BOARD_KEY = 'board_cfg_v2';
+        const PRESET_KEY = 'board_presets_list';
+
+        let myChart = null;
+        let historyData = [];
+        let boardCfg = { flashKB: null, ramKB: null };
+
+        // 默认的三款开发板配置 (如果是第一次打开)
+        let presetsData = JSON.parse(localStorage.getItem(PRESET_KEY)) || [
+            { name: 'STM32F407', flash: 1024, ram: 192 },
+            { name: 'STM32F103', flash: 64, ram: 20 },
+            { name: 'STM32F401', flash: 512, ram: 96 }
+        ];
+
+        // 删除自定义预设 (需要定义在全局才能被 onClick 调用)
+        window.deletePreset = function (event, idx) {
+            event.stopPropagation(); // 阻止点击事件冒泡(防止应用配额)
+            if (confirm('确定删除这个开发板配置吗？')) {
+                presetsData.splice(idx, 1);
+                localStorage.setItem(PRESET_KEY, JSON.stringify(presetsData));
+                renderPresets();
+            }
+        };
+
+        // 监听黑夜模式切换 (让 Echarts 同步变色)
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class' && !document.getElementById('tabChart').classList.contains('hidden')) {
+                    renderChart();
+                }
+            });
+        });
+        observer.observe(document.body, { attributes: true });
+
+        // 消息提示组件
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = { success: 'bg-emerald-500', error: 'bg-red-500', warning: 'bg-amber-500' };
+            toast.className = `${colors[type]} text-white px-6 py-3 rounded-xl shadow-xl transform transition-all duration-300 translate-x-full opacity-0 font-medium text-sm border-b-4 border-black/10`;
+            toast.innerText = msg;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-x-full', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function switchTab(id) {
+            document.getElementById('tabData').classList.toggle('hidden', id !== 'tabData');
+            document.getElementById('tabChart').classList.toggle('hidden', id !== 'tabChart');
+            document.getElementById('tabBtnData').classList.toggle('tab-active', id === 'tabData');
+            document.getElementById('tabBtnData').classList.toggle('text-slate-400', id !== 'tabData');
+            document.getElementById('tabBtnData').classList.toggle('dark:text-gray-400', id !== 'tabData');
+            document.getElementById('tabBtnChart').classList.toggle('tab-active', id === 'tabChart');
+            document.getElementById('tabBtnChart').classList.toggle('text-slate-400', id !== 'tabChart');
+            document.getElementById('tabBtnChart').classList.toggle('dark:text-gray-400', id !== 'tabChart');
+            if (id === 'tabChart') setTimeout(renderChart, 50);
+        }
+
+        function bytesToKB(b) { return (b / 1024).toFixed(2); }
+        function formatTime(ts) { return new Date(ts).toLocaleString(); }
+
+        function parseInput(raw) {
+            const text = raw.replace(/,/g, '');
+            const regex = /Code\s*=\s*(\d+).*?RO-data\s*=\s*(\d+).*?RW-data\s*=\s*(\d+).*?ZI-data\s*=\s*(\d+)/i;
+            const m = text.match(regex);
+            if (!m) return null;
+            const [_, c, ro, rw, zi] = m.map(Number);
+            return { ts: Date.now(), code: c, ro, rw, zi, flash: c + ro + rw, ram: rw + zi };
+        }
+
+        // 更新 "当前生效" 的文本显示
+        function updateCurrentLimitText() {
+            const text = boardCfg.flashKB ? `Flash: ${boardCfg.flashKB} KB, RAM: ${boardCfg.ramKB} KB` : '未设置上限';
+            document.getElementById('currentLimitText').innerText = text;
+            document.getElementById('boardFlash').value = boardCfg.flashKB || '';
+            document.getElementById('boardRam').value = boardCfg.ramKB || '';
+        }
+
+        // 渲染预设按钮 (带高亮和删除功能)
+        function renderPresets() {
+            const container = document.getElementById('presetContainer');
+            container.innerHTML = '';
+            presetsData.forEach((p, idx) => {
+                const btn = document.createElement('button');
+                const isActive = (boardCfg.flashKB === p.flash && boardCfg.ramKB === p.ram);
+
+                // 激活状态变蓝色
+                btn.className = `px-4 py-2 text-[13px] font-medium border rounded-lg transition-all active:scale-95 flex items-center gap-2 group relative 
+                    ${isActive
+                        ? 'border-primary bg-primary/10 text-primary dark:border-primary dark:bg-primary/20 dark:text-primary'
+                        : 'border-slate-200 dark:border-[#555] text-slate-600 dark:text-gray-300 hover:border-primary hover:bg-primary/5 dark:hover:border-primary'}`;
+
+                // 前3个不让删，自己加的悬浮显示小红叉
+                const delHtml = idx >= 3 ? `<span class="hidden group-hover:flex absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-[18px] h-[18px] text-[12px] items-center justify-center cursor-pointer hover:bg-red-600 shadow-md transition-all" onclick="window.deletePreset(event, ${idx})">×</span>` : '';
+
+                const flashText = p.flash >= 1024 ? (p.flash / 1024).toFixed(1).replace('.0', '') + 'M' : p.flash + 'K';
+                btn.innerHTML = `<span>${p.name} <span class="opacity-60 text-[11px]">(${flashText}/${p.ram}K)</span></span> ${delHtml}`;
+
+                btn.onclick = (e) => {
+                    if (e.target.tagName === 'SPAN' && e.target.classList.contains('bg-red-500')) return; // 点删除不触发应用
+                    boardCfg.flashKB = p.flash;
+                    boardCfg.ramKB = p.ram;
+                    localStorage.setItem(BOARD_KEY, JSON.stringify(boardCfg));
+                    updateCurrentLimitText();
+                    renderPresets();
+                    renderTable();
+                    if (!document.getElementById('tabChart').classList.contains('hidden')) renderChart();
+                    showToast(`已切换至: ${p.name}`);
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function renderTable() {
+            const body = document.getElementById('dataTable');
+            const tip = document.getElementById('emptyTip');
+            body.innerHTML = '';
+            tip.classList.toggle('hidden', historyData.length > 0);
+
+            [...historyData].reverse().forEach((item, idx) => {
+                const fKB = bytesToKB(item.flash);
+                const rKB = bytesToKB(item.ram);
+                const fPct = boardCfg.flashKB ? (fKB / boardCfg.flashKB * 100).toFixed(1) : '-';
+                const rPct = boardCfg.ramKB ? (rKB / boardCfg.ramKB * 100).toFixed(1) : '-';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 dark:hover:bg-[#384260]/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-4 px-4 text-slate-500 dark:text-gray-400 font-mono text-xs">${formatTime(item.ts)}</td>
+                    <td class="py-4 px-2 text-right font-medium dark:text-gray-200">${item.code}</td>
+                    <td class="py-4 px-2 text-right text-primary font-bold">${fKB}</td>
+                    <td class="py-4 px-2 text-right text-emerald-600 font-bold">${rKB}</td>
+                    <td class="py-4 px-2 text-right ${fPct > 90 ? 'text-red-500 font-black' : 'text-slate-600 dark:text-gray-300'}">${fPct}%</td>
+                    <td class="py-4 px-2 text-right ${rPct > 90 ? 'text-red-500 font-black' : 'text-slate-600 dark:text-gray-300'}">${rPct}%</td>
+                    <td class="py-4 px-4 text-center">
+                        <button onclick="deleteItem(${historyData.length - 1 - idx})" class="text-red-300 hover:text-red-500 dark:text-red-400 dark:hover:text-red-300 font-medium">移除</button>
+                    </td>
+                `;
+                body.appendChild(tr);
+            });
+        }
+
+        function renderChart() {
+            const dom = document.getElementById('chart');
+            if (dom.clientWidth === 0) return;
+            const isDark = document.body.classList.contains('dark-mode');
+
+            if (myChart) myChart.dispose();
+            myChart = echarts.init(dom, isDark ? 'dark' : null);
+
+            if (historyData.length === 0) {
+                myChart.clear();
+                return;
+            }
+
+            const data = [...historyData].sort((a, b) => a.ts - b.ts);
+
+            // 🌟 修改点 1：X轴不再使用时间，而是用纯序号，保证完美等距间隔
+            const x = data.map((_, index) => `第 ${index + 1} 次`);
+
+            const option = {
+                backgroundColor: 'transparent',
+                tooltip: {
+                    trigger: 'axis',
+                    // 🌟 修改点 2：自定义悬浮提示框，鼠标放上去时显示具体的日期和时间
+                    formatter: function (params) {
+                        const dataIndex = params[0].dataIndex;
+                        const realTime = formatTime(data[dataIndex].ts); // 获取真实录入时间
+                        let html = `<div style="font-size:12px; color:#888; margin-bottom:5px;">🕒 ${realTime}</div>`;
+                        params.forEach(p => {
+                            html += `<div style="font-weight:bold;">${p.marker} ${p.seriesName}: ${p.value} KB</div>`;
+                        });
+                        return html;
+                    }
+                },
+                legend: { top: 0 },
+                xAxis: {
+                    type: 'category',
+                    data: x,
+                    boundaryGap: false // 让折线顶格显示，视觉上更连贯
+                },
+                yAxis: { type: 'value', name: 'Size (KB)' },
+                series: [
+                    { name: 'Flash', type: 'line', data: data.map(i => bytesToKB(i.flash)), smooth: true, itemStyle: { color: '#0ea5e9' }, lineStyle: { width: 3 } },
+                    { name: 'RAM', type: 'line', data: data.map(i => bytesToKB(i.ram)), smooth: true, itemStyle: { color: '#10b981' }, lineStyle: { width: 3 } }
+                ]
+            };
+
+            if (boardCfg.flashKB) option.series[0].markLine = { data: [{ yAxis: boardCfg.flashKB, label: { formatter: 'Flash Limit' } }] };
+            if (boardCfg.ramKB) option.series[1].markLine = { data: [{ yAxis: boardCfg.ramKB, label: { formatter: 'RAM Limit' } }] };
+
+            myChart.setOption(option, true);
+        }
+
+        function deleteItem(i) {
+            if (confirm('确定删除?')) {
+                historyData.splice(i, 1);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(historyData));
+                renderTable();
+                if (!document.getElementById('tabChart').classList.contains('hidden')) renderChart();
+                showToast('已移除记录');
+            }
+        }
+
+        // 初始化
+        function init() {
+            historyData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+            boardCfg = JSON.parse(localStorage.getItem(BOARD_KEY)) || { flashKB: null, ramKB: null };
+
+            updateCurrentLimitText();
+            renderPresets();
+            renderTable();
+
+            // === 齿轮控制逻辑 ===
+            const viewMode = document.getElementById('viewMode');
+            const editMode = document.getElementById('editMode');
+            document.getElementById('gearBtn').onclick = () => {
+                viewMode.classList.add('hidden');
+                editMode.classList.remove('hidden');
+            };
+            document.getElementById('cancelBtn').onclick = () => {
+                editMode.classList.add('hidden');
+                viewMode.classList.remove('hidden');
+            };
+
+            // 选项卡与数据解析
+            document.getElementById('tabBtnData').onclick = () => switchTab('tabData');
+            document.getElementById('tabBtnChart').onclick = () => switchTab('tabChart');
+
+            document.getElementById('parseBtn').onclick = () => {
+                const d = parseInput(document.getElementById('inputText').value);
+                if (!d) return showToast('格式不正确！', 'error');
+                historyData.push(d);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(historyData));
+                document.getElementById('inputText').value = '';
+                renderTable();
+                if (!document.getElementById('tabChart').classList.contains('hidden')) renderChart();
+                showToast('解析成功');
+            };
+
+            // 手动保存配置
+            document.getElementById('saveBoardConfigBtn').onclick = () => {
+                boardCfg.flashKB = parseFloat(document.getElementById('boardFlash').value);
+                boardCfg.ramKB = parseFloat(document.getElementById('boardRam').value);
+                localStorage.setItem(BOARD_KEY, JSON.stringify(boardCfg));
+                updateCurrentLimitText();
+                renderPresets(); // 刷新掉高亮状态
+                renderTable();
+                if (!document.getElementById('tabChart').classList.contains('hidden')) renderChart();
+                showToast('临时配额已生效');
+                document.getElementById('cancelBtn').click(); // 自动收起面板
+            };
+
+            // 收藏自定义开发板
+            document.getElementById('addPresetBtn').onclick = () => {
+                const name = document.getElementById('newPresetName').value.trim();
+                const flash = parseFloat(document.getElementById('newPresetFlash').value);
+                const ram = parseFloat(document.getElementById('newPresetRam').value);
+
+                if (!name || isNaN(flash) || isNaN(ram)) {
+                    return showToast('请填写完整的开发板名称和容量', 'error');
+                }
+
+                presetsData.push({ name, flash, ram });
+                localStorage.setItem(PRESET_KEY, JSON.stringify(presetsData));
+                renderPresets();
+                showToast(`已收藏开发板: ${name}`);
+
+                document.getElementById('newPresetName').value = '';
+                document.getElementById('newPresetFlash').value = '';
+                document.getElementById('newPresetRam').value = '';
+            };
+
+            document.getElementById('clearAllBtn').onclick = () => {
+                if (confirm('清空所有历史数据？')) {
+                    historyData = [];
+                    localStorage.removeItem(STORAGE_KEY);
+                    renderTable();
+                    if (myChart) myChart.clear();
+                }
+            };
+
+            window.onresize = () => myChart && myChart.resize();
+        }
+
+        init();
+    </script>
+
+    <script src="../assets/js/theme.js"></script>
+</body>
+
+</html>
