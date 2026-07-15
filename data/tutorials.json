@@ -74,5 +74,12 @@
     "link": "https://github.com/你的仓库/esp32-setup",
     "tag": "嵌入式",
     "icon": "⚡"
+  },
+  {
+    "title": "E编译器优化的幽灵bug",
+    "desc": "防止E编译器优化导致的幽灵bug。",
+    "link": "https://share.note.youdao.com/s/A9B0BKMz",
+    "tag": "嵌入式",
+    "icon": "⚡"
   }
 ]
